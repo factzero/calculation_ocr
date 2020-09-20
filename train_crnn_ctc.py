@@ -11,6 +11,13 @@ from tools.dataset import imgDataset
 import tools.utils as utils
 
 
+parser = argparse.ArgumentParser(description='train')
+parser.add_argument('--image_root', default='./data/', type=str, help='train image root dir')
+parser.add_argument('--train_label', default='./data/data_train.list', type=str, help='train label')
+parser.add_argument('--val_label', default='./data/data_test.list', type=str, help='val label')
+parser.add_argument('--save_folder', default='./checkpoints/', help='Location to save checkpoint models')
+
+
 def val(model, loader, criterion, iteration, device, max_i=1000):
     print('Start val')
     for p in model.parameters():
@@ -96,6 +103,12 @@ def backward_hook(self, grad_input, grad_output):
 
 
 if __name__ == "__main__":
+    opt = parser.parse_args()
+    image_root = opt.image_root
+    train_label = opt.train_label
+    val_label = opt.val_label
+    save_folder = opt.save_folder
+    
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     nclass = len(params.alphabet) + 1
     nc = 1
@@ -111,10 +124,10 @@ if __name__ == "__main__":
     # model_path = './checkpoints/CRNN.pth'
     # model.load_state_dict(torch.load(model_path))
 
-    train_dataset = imgDataset('D:/80dataset/ocr/DataSet/testxx/images', 'D:/80dataset/ocr/DataSet/testxx/train.list', 
+    train_dataset = imgDataset(image_root, train_label, 
                                 params.alphabet, (params.imgW, params.imgH), params.mean, params.std)
     train_dataloader = DataLoader(train_dataset, batch_size=params.batchSize, shuffle=True, num_workers=params.workers)
-    val_dataset = imgDataset('D:/80dataset/ocr/DataSet/testxx/images', 'D:/80dataset/ocr/DataSet/testxx/train.list', 
+    val_dataset = imgDataset(image_root, val_label, 
                                 params.alphabet, (params.imgW, params.imgH), params.mean, params.std)
     val_dataloader = DataLoader(val_dataset, batch_size=params.batchSize, shuffle=False)
 
@@ -128,6 +141,6 @@ if __name__ == "__main__":
         accuracy = val(model, val_dataloader, criterion, Iteration, device, max_i=2000)
         if accuracy > best_accuracy:
             best_accuracy = accuracy
-            torch.save(model.state_dict(), '{0}/crnn_Rec_done_{1}_{2}.pth'.format(params.expr_dir, Iteration, accuracy))
-            torch.save(model.state_dict(), '{0}/crnn_best.pth'.format(params.expr_dir))
+            torch.save(model.state_dict(), '{0}/crnn_Rec_done_{1}_{2}.pth'.format(save_folder, Iteration, accuracy))
+            torch.save(model.state_dict(), '{0}/crnn_Rec_best.pth'.format(save_folder))
         Iteration += 1
