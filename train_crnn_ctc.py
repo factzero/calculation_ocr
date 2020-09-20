@@ -70,7 +70,7 @@ def train(model, loader, criterion, optimizer, iteration, device):
         batch_size = image.size(0)
         text, length = converter.encode(label)
         preds_size = torch.IntTensor([preds.size(0)] * batch_size)
-        cost = criterion(preds, text, preds_size, length) / batch_size
+        cost = criterion(preds.log_softmax(2), text, preds_size, length) / batch_size
         model.zero_grad()
         cost.backward()
         optimizer.step()
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     nclass = len(params.alphabet) + 1
     nc = 1
     model = CRNN(params.imgH, nc, nclass, params.nh)
-    criterion = torch.nn.CTCLoss(reduction='sum', zero_infinity=True)
+    criterion = torch.nn.CTCLoss(reduction='sum')
     optimizer = optim.Adam(model.parameters(), lr=params.lr, betas=(params.beta1, 0.999))
     if torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True

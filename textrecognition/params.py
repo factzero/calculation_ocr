@@ -1,4 +1,3 @@
-from textrecognition import alphabets
 from textrecognition import keys
 
 # about data and net
