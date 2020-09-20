@@ -16,6 +16,7 @@ parser.add_argument('--image_root', default='./data/', type=str, help='train ima
 parser.add_argument('--train_label', default='./data/data_train.list', type=str, help='train label')
 parser.add_argument('--val_label', default='./data/data_test.list', type=str, help='val label')
 parser.add_argument('--save_folder', default='./checkpoints/', help='Location to save checkpoint models')
+parser.add_argument('--batch_size', default=64, type=int, help='batch size')
 
 
 def val(model, loader, criterion, iteration, device, max_i=1000):
@@ -108,6 +109,7 @@ if __name__ == "__main__":
     train_label = opt.train_label
     val_label = opt.val_label
     save_folder = opt.save_folder
+    batch_size = opt.batch_size
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     nclass = len(params.alphabet) + 1
@@ -126,10 +128,10 @@ if __name__ == "__main__":
 
     train_dataset = imgDataset(image_root, train_label, 
                                 params.alphabet, (params.imgW, params.imgH), params.mean, params.std)
-    train_dataloader = DataLoader(train_dataset, batch_size=params.batchSize, shuffle=True, num_workers=params.workers)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=params.workers)
     val_dataset = imgDataset(image_root, val_label, 
                                 params.alphabet, (params.imgW, params.imgH), params.mean, params.std)
-    val_dataloader = DataLoader(val_dataset, batch_size=params.batchSize, shuffle=False)
+    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
     if not os.path.exists(params.expr_dir):
         os.mkdir(params.expr_dir)
@@ -138,7 +140,7 @@ if __name__ == "__main__":
     Iteration = 0
     while Iteration < params.niter:
         train(model, train_dataloader, criterion, optimizer, Iteration, device)
-        accuracy = val(model, val_dataloader, criterion, Iteration, device, max_i=2000)
+        accuracy = val(model, val_dataloader, criterion, Iteration, device, max_i=10000)
         if accuracy > best_accuracy:
             best_accuracy = accuracy
             torch.save(model.state_dict(), '{0}/crnn_Rec_done_{1}_{2}.pth'.format(save_folder, Iteration, accuracy))
