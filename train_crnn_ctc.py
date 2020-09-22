@@ -17,6 +17,7 @@ parser.add_argument('--train_label', default='./data/data_train.list', type=str,
 parser.add_argument('--val_label', default='./data/data_test.list', type=str, help='val label')
 parser.add_argument('--save_folder', default='./checkpoints/', help='Location to save checkpoint models')
 parser.add_argument('--batch_size', default=64, type=int, help='batch size')
+parser.add_argument('--resume_net', default='', help='resume net')
 
 
 def val(model, loader, criterion, iteration, device, max_i=1000):
@@ -110,6 +111,7 @@ if __name__ == "__main__":
     val_label = opt.val_label
     save_folder = opt.save_folder
     batch_size = opt.batch_size
+    resume_net = opt.resume_net
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     nclass = len(params.alphabet) + 1
@@ -121,7 +123,11 @@ if __name__ == "__main__":
         torch.backends.cudnn.benchmark = True
         model = model.cuda()
         criterion = criterion.cuda()
-    model.apply(weights_init)
+    if resume_net!='' and os.path.exists(resume_net):
+        print('loading pretrained model from %s' % resume_net)
+        model.load_state_dict(torch.load(resume_net))
+    else:
+        model.apply(weights_init)
     model.register_backward_hook(backward_hook)
     # model_path = './checkpoints/CRNN.pth'
     # model.load_state_dict(torch.load(model_path))
