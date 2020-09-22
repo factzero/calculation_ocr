@@ -2,6 +2,7 @@
 import argparse
 import numpy as np
 import os
+import time
 import torch
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
@@ -31,6 +32,7 @@ def val(model, loader, criterion, iteration, device, max_i=1000):
     converter = utils.strLabelConverter(alphabet)
     n_total = 0
     n_correct = 0
+    preds = 0
     for i_batch, (image, label, index) in enumerate(loader):
         image = image.to(device)
         preds = model(image)
@@ -147,6 +149,8 @@ if __name__ == "__main__":
     while Iteration < params.niter:
         train(model, train_dataloader, criterion, optimizer, Iteration, device)
         accuracy = val(model, val_dataloader, criterion, Iteration, device, max_i=10000)
+        torch.save(model.state_dict(), '{0}/crnn_Rec_done_s_{1}_{2}.pth'.format(
+            save_folder, Iteration, str(time.time())))
         if accuracy > best_accuracy:
             best_accuracy = accuracy
             torch.save(model.state_dict(), '{0}/crnn_Rec_done_{1}_{2}.pth'.format(save_folder, Iteration, accuracy))
