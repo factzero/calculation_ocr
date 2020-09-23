@@ -19,6 +19,7 @@ parser.add_argument('--val_label', default='./data/data_test.list', type=str, he
 parser.add_argument('--save_folder', default='./checkpoints/', help='Location to save checkpoint models')
 parser.add_argument('--batch_size', default=64, type=int, help='batch size')
 parser.add_argument('--resume_net', default='', help='resume net')
+parser.add_argument('--resume_iter', default=0, type=int, help='resume Iteration')
 
 
 def val(model, loader, criterion, iteration, device, max_i=1000):
@@ -145,7 +146,7 @@ if __name__ == "__main__":
         os.mkdir(params.expr_dir)
     
     best_accuracy = 0
-    Iteration = 0
+    Iteration = opt.resume_iter
     while Iteration < params.niter:
         train(model, train_dataloader, criterion, optimizer, Iteration, device)
         accuracy = val(model, val_dataloader, criterion, Iteration, device, max_i=10000)
