@@ -132,8 +132,6 @@ if __name__ == "__main__":
     else:
         model.apply(weights_init)
     model.register_backward_hook(backward_hook)
-    # model_path = './checkpoints/CRNN.pth'
-    # model.load_state_dict(torch.load(model_path))
 
     train_dataset = imgDataset(image_root, train_label, 
                                 params.alphabet, (params.imgW, params.imgH), params.mean, params.std)

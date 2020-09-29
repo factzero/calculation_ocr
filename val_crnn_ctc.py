@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import argparse
+import os
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -7,6 +8,13 @@ from textrecognition import params
 from textrecognition.crnn import CRNN
 from tools.dataset import imgDataset
 import tools.utils as utils
+
+
+parser = argparse.ArgumentParser(description='train')
+parser.add_argument('--image_root', default='./data/', type=str, help='train image root dir')
+parser.add_argument('--val_label', default='./data/data_test.list', type=str, help='val label')
+parser.add_argument('--trained_net', default='', help='trained net')
+parser.add_argument('--batch_size', default=64, type=int, help='batch size')
 
 
 def val(model, loader, criterion, iteration, device, max_i=1000):
@@ -40,8 +48,8 @@ def val(model, loader, criterion, iteration, device, max_i=1000):
             print('[%d/%d][%d/%d]' % (iteration, params.niter, i_batch, len(loader)))
 
         n_total += batch_size
-        if i_batch == max_i:
-            break
+        # if i_batch == max_i:
+        #     break
 
     raw_preds = converter.decode(preds.data, preds_size.data, raw=True)[:params.n_test_disp]
     for raw_pred, pred, gt in zip(raw_preds, sim_preds, label):
@@ -55,6 +63,12 @@ def val(model, loader, criterion, iteration, device, max_i=1000):
 
 
 if __name__ == "__main__":
+    opt = parser.parse_args()
+    image_root = opt.image_root
+    val_label = opt.val_label
+    trained_net = opt.trained_net
+    batch_size = opt.batch_size
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     nclass = len(params.alphabet) + 1
     nc = 1
@@ -63,11 +77,11 @@ if __name__ == "__main__":
         torch.backends.cudnn.benchmark = True
         model = model.cuda()
     criterion = torch.nn.CTCLoss(reduction='sum')
-    model_path = './checkpoints/CRNN.pth'
-    model.load_state_dict(torch.load(model_path))
+    if trained_net!='' and os.path.exists(trained_net):
+        print('loading pretrained model from %s' % trained_net)
+        model.load_state_dict(torch.load(trained_net))
 
-    val_dataset = imgDataset('D:/80dataset/ocr/DataSet/testxx/images', 'D:/80dataset/ocr/DataSet/testxx/train.list', 
-                                params.alphabet, (params.imgW, params.imgH), params.mean, params.std)
-    val_dataloader = DataLoader(val_dataset, batch_size=params.batchSize, shuffle=False, num_workers=params.workers)
+    val_dataset = imgDataset(image_root, val_label, params.alphabet, (params.imgW, params.imgH), params.mean, params.std)
+    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=params.workers)
 
     accuracy = val(model, val_dataloader, criterion, 1, device, max_i=20)

@@ -1,12 +1,45 @@
 # -*- coding: utf-8 -*-
 import cv2
 import os
+import random
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 from textrecognition import params
-from PIL import Image
+
+
+class resizeNormalize(object):
+    def __init__(self, size, interpolation=cv2.INTER_CUBIC, is_test=True):
+        self.size = size
+        self.interpolation = interpolation
+        self.is_test = is_test
+
+    def __call__(self, img):
+        if len(img.shape) == 3:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        h0, w0 = img.shape
+        w, h = self.size
+        if w <= (w0 / h0 * h):
+            image = cv2.resize(img, (w, h), interpolation=self.interpolation)
+            image = image.astype(np.float32) / 255.
+            image = torch.from_numpy(image).type(torch.FloatTensor)
+            image.sub_(params.mean).div_(params.std)
+            image = image.view(1, *image.size())
+        else:
+            w_real = int(w0 / h0 * h)
+            image = cv2.resize(img, (w_real, h), interpolation=self.interpolation)
+            image = image.astype(np.float32) / 255.
+            image = torch.from_numpy(image).type(torch.FloatTensor)
+            image.sub_(params.mean).div_(params.std)
+            tmp = torch.zeros([1, h, w])
+            start = random.randint(0, w - w_real)
+            if self.is_test:
+                start = 0
+            tmp[:, :, start:start + w_real] = image
+            image = tmp
+
+        return image
 
 
 class imgDataset(Dataset):
@@ -35,32 +68,27 @@ class imgDataset(Dataset):
 
         return image
 
+    # def __getitem__(self, index):
+    #     label = list(self.labels[index].values())[0]
+    #     image_name = list(self.labels[index].keys())[0]
+    #     image_name = os.path.join(self.imgs_dir, image_name)
+    #     image = cv2.imread(image_name, cv2.IMREAD_GRAYSCALE)
+    #     h, w = image.shape
+    #     w_new = int(w/h*params.imgH)
+    #     image = cv2.resize(image, (w_new, self.height), interpolation=cv2.INTER_CUBIC)
+    #     image = (np.reshape(image, (self.height, w_new, 1))).transpose(2, 0, 1)
+    #     image = self.preprocessing(image)
+
+    #     return image, label, index
     def __getitem__(self, index):
         label = list(self.labels[index].values())[0]
         image_name = list(self.labels[index].keys())[0]
         image_name = os.path.join(self.imgs_dir, image_name)
         image = cv2.imread(image_name, cv2.IMREAD_GRAYSCALE)
-        h, w = image.shape
-        w_new = int(w/h*params.imgH)
-        image = cv2.resize(image, (w_new, self.height), interpolation=cv2.INTER_CUBIC)
-        image = (np.reshape(image, (self.height, w_new, 1))).transpose(2, 0, 1)
-        image = self.preprocessing(image)
+        transformer = resizeNormalize((params.imgW, params.imgH))
+        image = transformer(image)
 
         return image, label, index
-
-
-class resizeNormalize(object):
-
-    def __init__(self, size, interpolation=Image.BILINEAR):
-        self.size = size
-        self.interpolation = interpolation
-        self.toTensor = transforms.ToTensor()
-
-    def __call__(self, img):
-        img = img.resize(self.size, self.interpolation)
-        img = self.toTensor(img)
-        img.sub_(params.mean).div_(params.std)        
-        return img
 
 
 if __name__ == '__main__':

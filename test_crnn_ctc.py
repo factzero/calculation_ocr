@@ -6,8 +6,8 @@ from textrecognition.crnn_inference import OcrTextRec
 
 
 parser = argparse.ArgumentParser(description='test')
-parser.add_argument('--image_name', default='./data/demo.jpg', type=str, help='image for processing')
-parser.add_argument('--model_path', default='./checkpoints/CRNN.pth', type=str, help='trained model path')
+parser.add_argument('--image_name', default='./data/img_0987732.jpg', type=str, help='image for processing')
+parser.add_argument('--model_path', default='./checkpoints/crnn_Rec_best.pth', type=str, help='trained model path')
 
 
 if __name__ == '__main__':
