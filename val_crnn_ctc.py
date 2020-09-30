@@ -81,7 +81,7 @@ if __name__ == "__main__":
         print('loading pretrained model from %s' % trained_net)
         model.load_state_dict(torch.load(trained_net))
 
-    val_dataset = imgDataset(image_root, val_label, params.alphabet, (params.imgW, params.imgH), params.mean, params.std)
+    val_dataset = imgDataset(image_root, val_label, params.alphabet, (params.imgW, params.imgH), params.mean, params.std, is_aug=False)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=params.workers)
 
     accuracy = val(model, val_dataloader, criterion, 1, device, max_i=20)

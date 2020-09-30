@@ -7,6 +7,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 from textrecognition import params
+from tools.data_augment import dataAugment
 
 
 class resizeNormalize(object):
@@ -43,7 +44,7 @@ class resizeNormalize(object):
 
 
 class imgDataset(Dataset):
-    def __init__(self, imgs_dir, labels_dir, alphabet, resize, mean, std):
+    def __init__(self, imgs_dir, labels_dir, alphabet, resize, mean, std, is_aug=True):
         super(imgDataset, self).__init__()
         self.imgs_dir = imgs_dir
         self.labels = self.get_labels(labels_dir)
@@ -51,6 +52,7 @@ class imgDataset(Dataset):
         self.width, self.height = resize
         self.mean = mean
         self.std = std
+        self.is_aug = is_aug
 
     def get_labels(self, label_path):
         with open(label_path, 'r', encoding='utf-8') as file:
@@ -73,22 +75,23 @@ class imgDataset(Dataset):
     #     image_name = list(self.labels[index].keys())[0]
     #     image_name = os.path.join(self.imgs_dir, image_name)
     #     image = cv2.imread(image_name, cv2.IMREAD_GRAYSCALE)
-    #     h, w = image.shape
-    #     w_new = int(w/h*params.imgH)
-    #     image = cv2.resize(image, (w_new, self.height), interpolation=cv2.INTER_CUBIC)
-    #     image = (np.reshape(image, (self.height, w_new, 1))).transpose(2, 0, 1)
-    #     image = self.preprocessing(image)
+    #     transformer = resizeNormalize((params.imgW, params.imgH))
+    #     image = transformer(image)
 
     #     return image, label, index
     def __getitem__(self, index):
         label = list(self.labels[index].values())[0]
         image_name = list(self.labels[index].keys())[0]
         image_name = os.path.join(self.imgs_dir, image_name)
-        image = cv2.imread(image_name, cv2.IMREAD_GRAYSCALE)
-        transformer = resizeNormalize((params.imgW, params.imgH))
+        image = cv2.imread(image_name)
+        if self.is_aug:
+            data_aug = dataAugment()
+            image = data_aug(image)
+        transformer = resizeNormalize((self.width, self.height))
         image = transformer(image)
 
         return image, label, index
+
 
 
 if __name__ == '__main__':

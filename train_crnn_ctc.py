@@ -137,7 +137,7 @@ if __name__ == "__main__":
                                 params.alphabet, (params.imgW, params.imgH), params.mean, params.std)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=params.workers)
     val_dataset = imgDataset(image_root, val_label, 
-                                params.alphabet, (params.imgW, params.imgH), params.mean, params.std)
+                                params.alphabet, (params.imgW, params.imgH), params.mean, params.std, is_aug=False)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
     if not os.path.exists(params.expr_dir):
