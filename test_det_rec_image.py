@@ -8,7 +8,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 parser = argparse.ArgumentParser(description='test')
 parser.add_argument('--image_name', default='./data/tx2.jpg', type=str, help='image for processing')
- 
+parser.add_argument('--det_model', default='./checkpoints/CTPN.pth', type=str, help='det model')
+parser.add_argument('--rec_model', default='./checkpoints/CRNN.pth', type=str, help='rec model')
   
 def cv2ImgAddText(img, text, left, top, textColor=(0, 255, 0), textSize=20):
     if (isinstance(img, np.ndarray)): # 判断是否OpenCV图片类型
@@ -26,7 +27,7 @@ def cv2ImgAddText(img, text, left, top, textColor=(0, 255, 0), textSize=20):
 if __name__ == "__main__":
     opt = parser.parse_args()
 
-    ocr = OcrDetRec('./checkpoints/CTPN.pth', './checkpoints/CRNN.pth')
+    ocr = OcrDetRec(opt.det_model, opt.rec_model)
     image_name = opt.image_name
     image = cv2.imread(image_name)
     results, image_framed = ocr.processing(image)
