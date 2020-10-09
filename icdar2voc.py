@@ -4,7 +4,11 @@ import glob
 import cv2
 import numpy as np
 import xml.dom.minidom
+import argparse
 
+parser = argparse.ArgumentParser(description='test')
+parser.add_argument('--icdar2017_root', default='D:/04download/icdar2017rctw_train_v1.2', type=str, help='source')
+parser.add_argument('--voc_root', default='D:/04download', help='target dir')
 
 def WriterXMLFiles(filename, img_name, box_list, labels, w, h, d):
     doc = xml.dom.minidom.Document()
@@ -108,13 +112,14 @@ def load_annoataion(p):
 
 
 if __name__ == "__main__":
+    opt = parser.parse_args()
     # source
-    icdar2017_root = "D:/04download/icdar2017rctw_train_v1.2"
+    icdar2017_root = opt.icdar2017_root
     train_img_dir = os.path.join(icdar2017_root, "train")
     train_txt_dir = os.path.join(icdar2017_root, "train")
 
     # target dir
-    voc_root = "D:/04download"
+    voc_root = opt.voc_root
     base_dir = os.path.join(voc_root, "VOC2007")
     if not os.path.exists(base_dir):
         os.mkdir(base_dir)
