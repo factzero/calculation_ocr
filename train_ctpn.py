@@ -104,5 +104,5 @@ if __name__ == "__main__":
             best_loss = epoch_loss
             best_loss_regr = epoch_loss_regr
             best_loss_cls = epoch_loss_cls
-            torch.save(model.state_dict(), '{0}/ctpn_done_{1}_{2}.pth'.format(save_folder, Iteration, accuracy))
+            torch.save(model.state_dict(), '{0}/ctpn_done_{1}.pth'.format(save_folder, Iteration))
         Iteration += 1
