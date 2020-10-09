@@ -11,9 +11,7 @@ from textdetection import params
 
 
 parser = argparse.ArgumentParser(description='train')
-parser.add_argument('--image_root', default='./data/', type=str, help='train image root dir')
-parser.add_argument('--train_label', default='./data/data_train.list', type=str, help='train label')
-parser.add_argument('--val_label', default='./data/data_test.list', type=str, help='val label')
+parser.add_argument('--image_root', default='D:/04download/VOC2007_v0', type=str, help='train image root dir')
 parser.add_argument('--save_folder', default='./checkpoints/', help='Location to save checkpoint models')
 parser.add_argument('--batch_size', default=64, type=int, help='batch size')
 parser.add_argument('--resume_net', default='', help='resume net')
@@ -28,6 +26,7 @@ def train(model, loader, criterion_cls, criterion_regr, optimizer, iteration, de
     epoch_loss_cls = 0
     epoch_loss_regr = 0
     epoch_loss = 0
+    epoch_size = len(loader)
     for i_batch, (image, gt_boxes, clss, index) in enumerate(loader):
         gt_boxes = gt_boxes.to(device)
         clss = clss.to(device)
@@ -45,7 +44,17 @@ def train(model, loader, criterion_cls, criterion_regr, optimizer, iteration, de
         epoch_loss_regr += loss_regr.item()
         epoch_loss += loss.item()
         mmp = i_batch + 1
-        print(loss)
+
+        print(f'Batch:{i_batch}/{epoch_size}\n'
+              f'batch: loss_cls:{loss_cls.item():.4f}--loss_regr:{loss_regr.item():.4f}--loss:{loss.item():.4f}\n'
+              f'Epoch: loss_cls:{epoch_loss_cls/mmp:.4f}--loss_regr:{epoch_loss_regr/mmp:.4f}--'
+              f'loss:{epoch_loss/mmp:.4f}\n')
+    
+    epoch_loss_cls /= epoch_size
+    epoch_loss_regr /= epoch_size
+    epoch_loss /= epoch_size
+
+    return epoch_loss_cls, epoch_loss_regr, epoch_loss
 
 
 def weights_init(m):
@@ -60,8 +69,6 @@ def weights_init(m):
 if __name__ == "__main__":
     opt = parser.parse_args()
     image_root = opt.image_root
-    train_label = opt.train_label
-    val_label = opt.val_label
     save_folder = opt.save_folder
     batch_size = opt.batch_size
     resume_net = opt.resume_net
@@ -82,10 +89,20 @@ if __name__ == "__main__":
     else:
         model.apply(weights_init)
     
-    train_dataset = vocDataset("D:/04download/VOC2007")
+    train_dataset = vocDataset(image_root)
     train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False)
 	
     Iteration = opt.resume_iter
+    best_loss_cls = 100
+    best_loss_regr = 100
+    best_loss = 100
     while Iteration < params.niter:
-        train(model, train_dataloader, criterion_cls, criterion_regr, optimizer, Iteration, device)
+        print(f'Epoch {Iteration}/{params.niter}')
+        print('#'*50)
+        epoch_loss_cls, epoch_loss_regr, epoch_loss = train(model, train_dataloader, criterion_cls, criterion_regr, optimizer, Iteration, device)
+        if best_loss_cls > epoch_loss_cls or best_loss_regr > epoch_loss_regr or best_loss > epoch_loss:
+            best_loss = epoch_loss
+            best_loss_regr = epoch_loss_regr
+            best_loss_cls = epoch_loss_cls
+            torch.save(model.state_dict(), '{0}/ctpn_done_{1}_{2}.pth'.format(save_folder, Iteration, accuracy))
         Iteration += 1

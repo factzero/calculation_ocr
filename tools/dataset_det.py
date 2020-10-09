@@ -51,8 +51,11 @@ class vocDataset(Dataset):
         self.imgs = self.get_trainval_imgs(os.path.join(self.voc_dir, "ImageSets", "Main", "trainval.txt"))
 
     def get_trainval_imgs(self, trainval_txt):
+        imgs = []
         with open(trainval_txt, 'r', encoding='utf-8') as file:
-            imgs = file.read().split('\n')
+            lines = file.readlines()
+        for line in lines:
+            imgs.append(line.rstrip("\n"))
 			
         return imgs
 
@@ -88,8 +91,6 @@ class vocDataset(Dataset):
         xml_file = os.path.join(self.voc_dir, "Annotations", (img + ".xml"))
         gt_boxes, labels, image_name = self.read_xml(xml_file)
         image_name = os.path.join(self.voc_dir, "JPEGImages", image_name)
-        print(xml_file)
-        print(image_name)
         image = cv2.imread(image_name)
         h, w, c = image.shape
         gt_boxes, class_ids = gen_gt_from_quadrilaterals(gt_boxes, labels, image.shape, params.ANCHORS_WIDTH)
@@ -101,13 +102,15 @@ class vocDataset(Dataset):
             image = cv2.resize(image,(w,h))
             gt_boxes = gt_boxes / rescale_fac
         
-        [clss, regr], base_anchors = cal_rpn((h, w), (int(h / 16), int(w / 16)), 16, gt_boxes)
+        image = image - params.IMAGE_MEAN
         image = torch.from_numpy(image.transpose([2, 0, 1])).float()
-        gt_boxes = torch.from_numpy(gt_boxes).float()
+        [clss, regr], base_anchors = cal_rpn((h, w), (int(h / 16), int(w / 16)), 16, gt_boxes)
+        regr = np.hstack([clss.reshape(clss.shape[0], 1), regr])
+        regr = torch.from_numpy(regr).float()
         clss = np.expand_dims(clss, axis=0)
         clss = torch.from_numpy(clss).float()
 
-        return image, gt_boxes, clss, index
+        return image, regr, clss, index
 
 
 if __name__ == '__main__':
