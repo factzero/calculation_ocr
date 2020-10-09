@@ -133,21 +133,15 @@ if __name__ == "__main__":
     if not os.path.exists(target_set_dir):
         os.mkdir(target_set_dir)
 
+    gt_list = []
+    img_list = []
     # rename and move img to target_img_dir
     for file_name in os.listdir(train_img_dir):
         if file_name.split('.')[-1] == 'jpg':
             os.rename(os.path.join(train_img_dir, file_name), 
                       os.path.join(target_img_dir, "ICDAR2017_Train_" + os.path.basename(file_name)))
-
-    gt_list = []
-    img_list = []
-    for file_name in os.listdir(target_img_dir):
-        if file_name.split('.')[-1] == 'jpg':
-            img_list.append(file_name)
-
-    for file_name in os.listdir(train_txt_dir):
-        if file_name.split('.')[-1] == 'txt':
-            gt_list.append(file_name)
+            img_list.append("ICDAR2017_Train_" + os.path.basename(file_name))
+            gt_list.append(file_name.replace('.jpg', '.txt'))
 
     for idx in range(len(img_list)):
         img_name = os.path.join(target_img_dir, img_list[idx])
