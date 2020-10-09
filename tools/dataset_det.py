@@ -95,7 +95,7 @@ class vocDataset(Dataset):
         h, w, c = image.shape
         gt_boxes, class_ids = gen_gt_from_quadrilaterals(gt_boxes, labels, image.shape, params.ANCHORS_WIDTH)
 
-        rescale_fac = max(h, w) / 800
+        rescale_fac = max(h, w) / 1600
         if rescale_fac > 1.0:
             h = int(h / rescale_fac)
             w = int(w / rescale_fac)
