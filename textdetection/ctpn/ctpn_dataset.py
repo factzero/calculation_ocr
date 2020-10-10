@@ -66,14 +66,16 @@ class vocDataset(Dataset):
         if rescale_fac > 1.0:
             h = int(h / rescale_fac)
             w = int(w / rescale_fac)
-            image = cv2.resize(image,(w,h))
+            image = cv2.resize(image, (w, h))
             gt_boxes = gt_boxes / rescale_fac
         
         image = image - ctpn_params.IMAGE_MEAN
         image = torch.from_numpy(image.transpose([2, 0, 1])).float()
+
         [clss, regr], base_anchors = cal_rpn((h, w), (int(h / 16), int(w / 16)), 16, gt_boxes)
         regr = np.hstack([clss.reshape(clss.shape[0], 1), regr])
         regr = torch.from_numpy(regr).float()
+
         clss = np.expand_dims(clss, axis=0)
         clss = torch.from_numpy(clss).float()
 

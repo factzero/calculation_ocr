@@ -83,29 +83,35 @@ if __name__ == "__main__":
         torch.backends.cudnn.benchmark = True
         model = model.cuda()
     
+    resume_epoch = 0
     if resume_net!='' and os.path.exists(resume_net):
         print('loading pretrained model from %s' % resume_net)
-        model.load_state_dict(torch.load(resume_net))
+        cc = torch.load(resume_net, map_location=device)
+        model.load_state_dict(cc['model_state_dict'])
+        resume_epoch = cc['epoch']
     else:
         model.apply(weights_init)
     
     train_dataset = vocDataset(image_root)
     train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False)
 	
-    Iteration = opt.resume_iter
+    epoch = resume_epoch
     best_loss_cls = 100
     best_loss_regr = 100
     best_loss = 100
-    while Iteration < ctpn_params.niter:
-        print(f'Epoch {Iteration}/{ctpn_params.niter}')
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    while epoch < ctpn_params.niter:
+        print(f'Epoch {epoch}/{ctpn_params.niter}')
         print('#'*50)
-        epoch_loss_cls, epoch_loss_regr, epoch_loss = train(model, train_dataloader, criterion_cls, criterion_regr, optimizer, Iteration, device)
+        epoch_loss_cls, epoch_loss_regr, epoch_loss = train(model, train_dataloader, criterion_cls, criterion_regr, 
+            optimizer, epoch, device)
         if best_loss_cls > epoch_loss_cls or best_loss_regr > epoch_loss_regr or best_loss > epoch_loss:
             best_loss = epoch_loss
             best_loss_regr = epoch_loss_regr
             best_loss_cls = epoch_loss_cls
             check_path = os.path.join(save_folder,
-                                      f'ctpn_done_ep{Iteration:02d}_'
+                                      f'ctpn_done_ep{epoch:02d}_'
                                       f'{best_loss_cls:.4f}_{best_loss_regr:.4f}_{best_loss:.4f}.pth')
-            torch.save({'model_state_dict': model.state_dict(), 'epoch': Iteration}, check_path)
-        Iteration += 1
+            torch.save({'model_state_dict': model.state_dict(), 'epoch': epoch}, check_path)
+        scheduler.step(epoch)
+        epoch += 1
