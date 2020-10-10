@@ -4,10 +4,10 @@ import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
-from textdetection.ctpn_model import CTPN_Model
-from textdetection.ctpn_utils import gen_anchor, bbox_transfor_inv, clip_box, filter_bbox,nms, TextProposalConnectorOriented
-from textdetection.ctpn_utils import resize
-from textdetection import params
+from textdetection.ctpn.ctpn_model import CTPN_Model
+from textdetection.ctpn.ctpn_utils import gen_anchor, bbox_transfor_inv, clip_box, filter_bbox,nms, TextProposalConnectorOriented
+from textdetection.ctpn.ctpn_utils import resize
+from textdetection.ctpn import ctpn_params
 
 class OcrDetCTPN():
     def __init__(self, model_path='./checkpoints/CTPN.pth'):
@@ -24,11 +24,11 @@ class OcrDetCTPN():
         self.prob_thresh = 0.5
 
     def inference(self, image, display=True, expand=True):
-        image = resize(image, height=params.IMAGE_HEIGHT)
+        image = resize(image, height=ctpn_params.IMAGE_HEIGHT)
         image_r = image.copy()
         image_c = image.copy()
         h, w = image.shape[:2]
-        image = image.astype(np.float32) - params.IMAGE_MEAN
+        image = image.astype(np.float32) - ctpn_params.IMAGE_MEAN
         image = torch.from_numpy(image.transpose(2, 0, 1)).unsqueeze(0).float()
 
         if self.use_gpu:

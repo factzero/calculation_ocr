@@ -7,41 +7,8 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 from xml.dom.minidom import parse
-from textdetection import params
-from tools.utils_ctpn import gen_gt_from_quadrilaterals, cal_rpn
-
-
-class resizeNormalize(object):
-    def __init__(self, size, interpolation=cv2.INTER_CUBIC, is_test=True):
-        self.size = size
-        self.interpolation = interpolation
-        self.is_test = is_test
-
-    def __call__(self, img):
-        if len(img.shape) == 3:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        h0, w0 = img.shape
-        w, h = self.size
-        if w <= (w0 / h0 * h):
-            image = cv2.resize(img, (w, h), interpolation=self.interpolation)
-            image = image.astype(np.float32) / 255.
-            image = torch.from_numpy(image).type(torch.FloatTensor)
-            image.sub_(params.mean).div_(params.std)
-            image = image.view(1, *image.size())
-        else:
-            w_real = int(w0 / h0 * h)
-            image = cv2.resize(img, (w_real, h), interpolation=self.interpolation)
-            image = image.astype(np.float32) / 255.
-            image = torch.from_numpy(image).type(torch.FloatTensor)
-            image.sub_(params.mean).div_(params.std)
-            tmp = torch.zeros([1, h, w])
-            start = random.randint(0, w - w_real)
-            if self.is_test:
-                start = 0
-            tmp[:, :, start:start + w_real] = image
-            image = tmp
-
-        return image
+from textdetection.ctpn import ctpn_params
+from textdetection.ctpn.ctpn_utils import gen_gt_from_quadrilaterals, cal_rpn
 
 
 class vocDataset(Dataset):
@@ -93,7 +60,7 @@ class vocDataset(Dataset):
         image_name = os.path.join(self.voc_dir, "JPEGImages", image_name)
         image = cv2.imread(image_name)
         h, w, c = image.shape
-        gt_boxes, class_ids = gen_gt_from_quadrilaterals(gt_boxes, labels, image.shape, params.ANCHORS_WIDTH)
+        gt_boxes, class_ids = gen_gt_from_quadrilaterals(gt_boxes, labels, image.shape, ctpn_params.ANCHORS_WIDTH)
 
         rescale_fac = max(h, w) / 1600
         if rescale_fac > 1.0:
@@ -102,7 +69,7 @@ class vocDataset(Dataset):
             image = cv2.resize(image,(w,h))
             gt_boxes = gt_boxes / rescale_fac
         
-        image = image - params.IMAGE_MEAN
+        image = image - ctpn_params.IMAGE_MEAN
         image = torch.from_numpy(image.transpose([2, 0, 1])).float()
         [clss, regr], base_anchors = cal_rpn((h, w), (int(h / 16), int(w / 16)), 16, gt_boxes)
         regr = np.hstack([clss.reshape(clss.shape[0], 1), regr])
@@ -111,13 +78,3 @@ class vocDataset(Dataset):
         clss = torch.from_numpy(clss).float()
 
         return image, regr, clss, index
-
-
-if __name__ == '__main__':
-    train_dataset = imgDataset('D:/80dataset/ocr/DataSet/testxx/images', 'D:/80dataset/ocr/DataSet/testxx/train.list', 
-                                params.alphabet, (params.imgW, params.imgH), params.mean, params.std)
-    train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=False)
-	
-    for i_batch, (image, label, index) in enumerate(train_dataloader):
-        print(image.shape)
-        print(label)

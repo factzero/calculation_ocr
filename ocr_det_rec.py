@@ -2,8 +2,8 @@
 import cv2
 import numpy as np
 from math import *
-from textdetection.ctpn_inference import OcrDetCTPN
-from textrecognition.crnn_inference import OcrTextRec
+from textdetection.ctpn.ctpn_inference import OcrDetCTPN
+from textrecognition.crnnCTC.crnn_inference import OcrTextRec
 
 
 class OcrDetRec():

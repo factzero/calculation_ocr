@@ -10,6 +10,7 @@ IOU_NEGATIVE = 0.3
 IOU_POSITIVE = 0.7
 IOU_SELECT = 0.7
 RPN_POSITIVE_NUM = 128
+RPN_TOTAL_NUM = 300
 
 lr = 0.0001 # learning rate for Critic, not used by adadealta
 niter = 300

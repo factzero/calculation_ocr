@@ -5,9 +5,9 @@ import argparse
 import torch
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
-from tools.dataset_det import vocDataset
-from textdetection.ctpn_model import CTPN_Model, RPN_CLS_Loss, RPN_REGR_Loss
-from textdetection import params
+from textdetection.ctpn.ctpn_dataset import vocDataset
+from textdetection.ctpn.ctpn_model import CTPN_Model, RPN_CLS_Loss, RPN_REGR_Loss
+from textdetection.ctpn import ctpn_params
 
 
 parser = argparse.ArgumentParser(description='train')
@@ -78,7 +78,7 @@ if __name__ == "__main__":
 
     criterion_cls = RPN_CLS_Loss(device)
     criterion_regr = RPN_REGR_Loss(device)
-    optimizer = optim.SGD(model.parameters(), lr=params.lr, momentum=0.9)
+    optimizer = optim.SGD(model.parameters(), lr=ctpn_params.lr, momentum=0.9)
     if torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True
         model = model.cuda()
@@ -96,8 +96,8 @@ if __name__ == "__main__":
     best_loss_cls = 100
     best_loss_regr = 100
     best_loss = 100
-    while Iteration < params.niter:
-        print(f'Epoch {Iteration}/{params.niter}')
+    while Iteration < ctpn_params.niter:
+        print(f'Epoch {Iteration}/{ctpn_params.niter}')
         print('#'*50)
         epoch_loss_cls, epoch_loss_regr, epoch_loss = train(model, train_dataloader, criterion_cls, criterion_regr, optimizer, Iteration, device)
         if best_loss_cls > epoch_loss_cls or best_loss_regr > epoch_loss_regr or best_loss > epoch_loss:

@@ -4,8 +4,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from torch.utils.data import Dataset, DataLoader
-from tools.dataset_det import vocDataset
-from tools.utils_ctpn import gen_gt_from_quadrilaterals
+from textdetection.ctpn.ctpn_dataset import vocDataset
 
 def box_transfer_v2(coor_lists, rescale_fac = 1.0):
     gtboxes = []

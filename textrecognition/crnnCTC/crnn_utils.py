@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import collections
-from textrecognition import params
+from textrecognition.crnnCTC import crnn_params
 from tqdm import tqdm
 import numpy as np 
 import cv2
@@ -171,7 +171,7 @@ def get_batch_label(d, i):
 
 def compute_std_mean(txt_path, image_prefix, NUM=None):
     
-    imgs = np.zeros([params.imgH, params.imgW, 1, 1])
+    imgs = np.zeros([crnn_params.imgH, crnn_params.imgW, 1, 1])
     means, stds = [], []
     with open(txt_path, 'r') as file:
         contents = [c.strip().split(' ')[0] for c in file.readlines()]
@@ -185,7 +185,7 @@ def compute_std_mean(txt_path, image_prefix, NUM=None):
             img = cv2.imread(img_path)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             h, w = img.shape[:2]
-            img = cv2.resize(img, (0,0), fx=params.imgW/w, fy=params.imgH/h, interpolation=cv2.INTER_CUBIC)
+            img = cv2.resize(img, (0,0), fx=crnn_params.imgW/w, fy=crnn_params.imgH/h, interpolation=cv2.INTER_CUBIC)
             img = img[:, :, np.newaxis, np.newaxis]
             imgs = np.concatenate((imgs, img), axis=3)
     imgs = imgs.astype(np.float32) / 255.

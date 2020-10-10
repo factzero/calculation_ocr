@@ -6,10 +6,10 @@ import time
 import torch
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
-from textrecognition import params
-from textrecognition.crnn import CRNN
-from tools.dataset import imgDataset
-import tools.utils as utils
+from textrecognition.crnnCTC import crnn_params
+from textrecognition.crnnCTC.crnn_model import CRNN
+from textrecognition.crnnCTC.crnn_dataset import imgDataset
+import textrecognition.crnnCTC.crnn_utils as utils
 
 
 parser = argparse.ArgumentParser(description='train')
@@ -29,7 +29,7 @@ def val(model, loader, criterion, iteration, device, max_i=1000):
     model.eval()
     
     loss_avg = utils.averager()
-    alphabet = ''.join([chr(uni) for uni in params.alphabet])
+    alphabet = ''.join([chr(uni) for uni in crnn_params.alphabet])
     converter = utils.strLabelConverter(alphabet)
     n_total = 0
     n_correct = 0
@@ -50,14 +50,14 @@ def val(model, loader, criterion, iteration, device, max_i=1000):
             if pred == target:
                 n_correct += 1
 
-        if (i_batch+1)%params.displayInterval == 0:
-            print('[%d/%d][%d/%d]' % (iteration, params.niter, i_batch, len(loader)))
+        if (i_batch+1)%crnn_params.displayInterval == 0:
+            print('[%d/%d][%d/%d]' % (iteration, crnn_params.niter, i_batch, len(loader)))
 
         n_total += batch_size
         if i_batch == max_i:
             break
 
-    raw_preds = converter.decode(preds.data, preds_size.data, raw=True)[:params.n_test_disp]
+    raw_preds = converter.decode(preds.data, preds_size.data, raw=True)[:crnn_params.n_test_disp]
     for raw_pred, pred, gt in zip(raw_preds, sim_preds, label):
         print('%-20s => %-20s, gt: %-20s' % (raw_pred, pred, gt))
 
@@ -74,7 +74,7 @@ def train(model, loader, criterion, optimizer, iteration, device):
     model.train()
 
     loss_avg = utils.averager()
-    alphabet = ''.join([chr(uni) for uni in params.alphabet])
+    alphabet = ''.join([chr(uni) for uni in crnn_params.alphabet])
     converter = utils.strLabelConverter(alphabet)
     for i_batch, (image, label, index) in enumerate(loader):
         image = image.to(device)
@@ -88,8 +88,8 @@ def train(model, loader, criterion, optimizer, iteration, device):
         optimizer.step()
         loss_avg.add(cost)
 
-        if (i_batch+1) % params.displayInterval == 0:
-            print('[%d/%d][%d/%d] Loss: %f' % (iteration, params.niter, i_batch, len(loader), loss_avg.val()))
+        if (i_batch+1) % crnn_params.displayInterval == 0:
+            print('[%d/%d][%d/%d] Loss: %f' % (iteration, crnn_params.niter, i_batch, len(loader), loss_avg.val()))
             loss_avg.reset()
 
 
@@ -117,11 +117,11 @@ if __name__ == "__main__":
     resume_net = opt.resume_net
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    nclass = len(params.alphabet) + 1
+    nclass = len(crnn_params.alphabet) + 1
     nc = 1
-    model = CRNN(params.imgH, nc, nclass, params.nh)
+    model = CRNN(crnn_params.imgH, nc, nclass, crnn_params.nh)
     criterion = torch.nn.CTCLoss(reduction='sum')
-    optimizer = optim.Adam(model.parameters(), lr=params.lr, betas=(params.beta1, 0.999))
+    optimizer = optim.Adam(model.parameters(), lr=crnn_params.lr, betas=(crnn_params.beta1, 0.999))
     if torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True
         model = model.cuda()
@@ -134,18 +134,18 @@ if __name__ == "__main__":
     model.register_backward_hook(backward_hook)
 
     train_dataset = imgDataset(image_root, train_label, 
-                                params.alphabet, (params.imgW, params.imgH), params.mean, params.std)
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=params.workers)
+                               crnn_params.alphabet, (crnn_params.imgW, crnn_params.imgH), crnn_params.mean, crnn_params.std)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=crnn_params.workers)
     val_dataset = imgDataset(image_root, val_label, 
-                                params.alphabet, (params.imgW, params.imgH), params.mean, params.std, is_aug=False)
+                             crnn_params.alphabet, (crnn_params.imgW, crnn_params.imgH), crnn_params.mean, crnn_params.std, is_aug=False)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
-    if not os.path.exists(params.expr_dir):
-        os.mkdir(params.expr_dir)
+    if not os.path.exists(crnn_params.expr_dir):
+        os.mkdir(crnn_params.expr_dir)
     
     best_accuracy = 0
     Iteration = opt.resume_iter
-    while Iteration < params.niter:
+    while Iteration < crnn_params.niter:
         train(model, train_dataloader, criterion, optimizer, Iteration, device)
         accuracy = val(model, val_dataloader, criterion, Iteration, device, max_i=10000)
         torch.save(model.state_dict(), '{0}/crnn_Rec_done_s_{1}_{2}.pth'.format(

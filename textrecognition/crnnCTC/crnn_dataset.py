@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
-from textrecognition import params
+from textrecognition.crnnCTC import crnn_params
 from tools.data_augment import dataAugment
 
 
@@ -25,14 +25,14 @@ class resizeNormalize(object):
             image = cv2.resize(img, (w, h), interpolation=self.interpolation)
             image = image.astype(np.float32) / 255.
             image = torch.from_numpy(image).type(torch.FloatTensor)
-            image.sub_(params.mean).div_(params.std)
+            image.sub_(crnn_params.mean).div_(crnn_params.std)
             image = image.view(1, *image.size())
         else:
             w_real = int(w0 / h0 * h)
             image = cv2.resize(img, (w_real, h), interpolation=self.interpolation)
             image = image.astype(np.float32) / 255.
             image = torch.from_numpy(image).type(torch.FloatTensor)
-            image.sub_(params.mean).div_(params.std)
+            image.sub_(crnn_params.mean).div_(crnn_params.std)
             tmp = torch.zeros([1, h, w])
             start = random.randint(0, w - w_real)
             if self.is_test:
@@ -96,7 +96,7 @@ class imgDataset(Dataset):
 
 if __name__ == '__main__':
     train_dataset = imgDataset('D:/80dataset/ocr/DataSet/testxx/images', 'D:/80dataset/ocr/DataSet/testxx/train.list', 
-                                params.alphabet, (params.imgW, params.imgH), params.mean, params.std)
+                               crnn_params.alphabet, (crnn_params.imgW, crnn_params.imgH), crnn_params.mean, crnn_params.std)
     train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=False)
 	
     for i_batch, (image, label, index) in enumerate(train_dataloader):

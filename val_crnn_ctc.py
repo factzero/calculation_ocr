@@ -4,10 +4,10 @@ import os
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
-from textrecognition import params
-from textrecognition.crnn import CRNN
-from tools.dataset import imgDataset
-import tools.utils as utils
+from textrecognition.crnnCTC import crnn_params
+from textrecognition.crnnCTC.crnn_model import CRNN
+from textrecognition.crnnCTC.crnn_dataset import imgDataset
+import textrecognition.crnnCTC.crnn_utils as utils
 
 
 parser = argparse.ArgumentParser(description='train')
@@ -44,14 +44,14 @@ def val(model, loader, criterion, iteration, device, max_i=1000):
             if pred == target:
                 n_correct += 1
 
-        if (i_batch+1)%params.displayInterval == 0:
-            print('[%d/%d][%d/%d]' % (iteration, params.niter, i_batch, len(loader)))
+        if (i_batch+1)%crnn_params.displayInterval == 0:
+            print('[%d/%d][%d/%d]' % (iteration, crnn_params.niter, i_batch, len(loader)))
 
         n_total += batch_size
         # if i_batch == max_i:
         #     break
 
-    raw_preds = converter.decode(preds.data, preds_size.data, raw=True)[:params.n_test_disp]
+    raw_preds = converter.decode(preds.data, preds_size.data, raw=True)[:crnn_params.n_test_disp]
     for raw_pred, pred, gt in zip(raw_preds, sim_preds, label):
         print('%-20s => %-20s, gt: %-20s' % (raw_pred, pred, gt))
 
@@ -70,9 +70,9 @@ if __name__ == "__main__":
     batch_size = opt.batch_size
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    nclass = len(params.alphabet) + 1
+    nclass = len(crnn_params.alphabet) + 1
     nc = 1
-    model = CRNN(32, nc, nclass, params.nh)
+    model = CRNN(32, nc, nclass, crnn_params.nh)
     if torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True
         model = model.cuda()
@@ -81,7 +81,7 @@ if __name__ == "__main__":
         print('loading pretrained model from %s' % trained_net)
         model.load_state_dict(torch.load(trained_net))
 
-    val_dataset = imgDataset(image_root, val_label, params.alphabet, (params.imgW, params.imgH), params.mean, params.std, is_aug=False)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=params.workers)
+    val_dataset = imgDataset(image_root, val_label, crnn_params.alphabet, (crnn_params.imgW, crnn_params.imgH), crnn_params.mean, crnn_params.std, is_aug=False)
+    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=crnn_params.workers)
 
     accuracy = val(model, val_dataloader, criterion, 1, device, max_i=20)
