@@ -13,7 +13,7 @@ from textdetection.ctpn import ctpn_params
 parser = argparse.ArgumentParser(description='train')
 parser.add_argument('--image_root', default='D:/04download/VOC2007_v0', type=str, help='train image root dir')
 parser.add_argument('--save_folder', default='./checkpoints/', help='Location to save checkpoint models')
-parser.add_argument('--batch_size', default=64, type=int, help='batch size')
+parser.add_argument('--batch_size', default=4, type=int, help='batch size')
 parser.add_argument('--resume_net', default='', help='resume net')
 parser.add_argument('--resume_iter', default=0, type=int, help='resume Iteration')
 
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         model.apply(weights_init)
     
     train_dataset = vocDataset(image_root)
-    train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
 	
     epoch = resume_epoch
     best_loss_cls = 100
