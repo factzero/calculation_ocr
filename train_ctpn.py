@@ -31,12 +31,14 @@ def train(model, loader, criterion_cls, criterion_regr, optimizer, iteration, de
         gt_boxes = gt_boxes.to(device)
         clss = clss.to(device)
         image = image.to(device)
+
+        optimizer.zero_grad()
+
         out_cls, out_regr = model(image)
         loss_cls = criterion_cls(out_cls, clss)
         loss_regr = criterion_regr(out_regr, gt_boxes)
         loss = loss_cls + loss_regr   
 
-        model.zero_grad()
         loss.backward()
         optimizer.step()
 
@@ -113,5 +115,5 @@ if __name__ == "__main__":
                                       f'ctpn_done_ep{epoch:02d}_'
                                       f'{best_loss_cls:.4f}_{best_loss_regr:.4f}_{best_loss:.4f}.pth')
             torch.save({'model_state_dict': model.state_dict(), 'epoch': epoch}, check_path)
-        scheduler.step(epoch)
+        scheduler.step()
         epoch += 1

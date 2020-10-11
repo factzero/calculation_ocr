@@ -4,6 +4,26 @@ import cv2
 from textdetection.ctpn.ctpn_params import *
 
 
+def resize_image2square(img, max_size, color=(0, 0, 0)):
+    """
+    缩放图像为正方形，指定长边大小，短边padding;
+    :param image: opencv image
+    :param max_dim: 长边大小
+    :return: 缩放后的图像, 缩放尺寸，padding[top, bottom, left, right]
+    """
+    h, w, c = img.shape
+    rescale_fac = max(h, w) / IMAGE_HEIGHT
+    h_new = int(h / rescale_fac)
+    w_new = int(w / rescale_fac)
+    right_pad = IMAGE_HEIGHT - w_new
+    bottom_pad = IMAGE_HEIGHT - h_new
+    img_new = cv2.resize(img, (w_new, h_new), interpolation=cv2.INTER_LINEAR)
+    img_new = cv2.copyMakeBorder(img_new, 0, bottom_pad, 0, right_pad, cv2.BORDER_CONSTANT, value=(0, 0, 0))
+    padding = [0, bottom_pad, 0, right_pad]
+
+    return img_new, rescale_fac, padding
+
+
 def resize(image, width=None, height=None, inter=cv2.INTER_AREA):
     # initialize the dimensions of the image to be resized and
     # grab the image size
@@ -562,3 +582,17 @@ def gen_gt_from_quadrilaterals(gt_quadrilaterals, input_gt_class_ids, image_shap
     width = gt_boxes[:, 2] - gt_boxes[:, 0]
     indices = np.where(np.logical_and(height >= 8, width >= 2))
     return gt_boxes[indices], gt_class_ids[indices]
+
+
+def adj_gtboxes(gt_boxes, rescale_fac, padding):
+    """
+    从gt 四边形生成，宽度固定的gt boxes
+    :param gt_boxes: GT四边形坐标, [(x1, y1, x2, y2, x3, y3, x4, y4)]
+    :param rescale_fac: 缩放尺寸
+    :param padding: 扩边尺寸[top, bottom, left, right]
+    :return: gt_boxes：[(x1, y1, x2, y2, x3, y3, x4, y4)]
+    """
+    gt_boxes = gt_boxes / rescale_fac
+    gt_boxes = gt_boxes.astype(np.int32)
+
+    return gt_boxes

@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 from xml.dom.minidom import parse
 from textdetection.ctpn import ctpn_params
-from textdetection.ctpn.ctpn_utils import gen_gt_from_quadrilaterals, cal_rpn
+from textdetection.ctpn.ctpn_utils import gen_gt_from_quadrilaterals, cal_rpn, resize_image2square, adj_gtboxes
 
 
 class vocDataset(Dataset):
@@ -59,16 +59,12 @@ class vocDataset(Dataset):
         gt_boxes, labels, image_name = self.read_xml(xml_file)
         image_name = os.path.join(self.voc_dir, "JPEGImages", image_name)
         image = cv2.imread(image_name)
-        h, w, c = image.shape
-        gt_boxes, class_ids = gen_gt_from_quadrilaterals(gt_boxes, labels, image.shape, ctpn_params.ANCHORS_WIDTH)
+        image, rescale_fac, padding = resize_image2square(image, ctpn_params.IMAGE_HEIGHT)
 
-        rescale_fac = max(h, w) / 1600
-        if rescale_fac > 1.0:
-            h = int(h / rescale_fac)
-            w = int(w / rescale_fac)
-            image = cv2.resize(image, (w, h))
-            gt_boxes = gt_boxes / rescale_fac
+        gt_boxes = adj_gtboxes(gt_boxes, rescale_fac, padding)
+        gt_boxes, class_ids = gen_gt_from_quadrilaterals(gt_boxes, labels, image.shape, ctpn_params.ANCHORS_WIDTH)
         
+        h, w, c = image.shape
         image = image - ctpn_params.IMAGE_MEAN
         image = torch.from_numpy(image.transpose([2, 0, 1])).float()
 
