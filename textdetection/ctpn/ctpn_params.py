@@ -13,5 +13,5 @@ RPN_POSITIVE_NUM = 128
 RPN_TOTAL_NUM = 300
 
 lr = 0.001
-niter = 30
+niter = 300
 
