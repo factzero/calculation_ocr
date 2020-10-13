@@ -58,6 +58,7 @@ class vocDataset(Dataset):
         xml_file = os.path.join(self.voc_dir, "Annotations", (img + ".xml"))
         gt_boxes, labels, image_name = self.read_xml(xml_file)
         image_name = os.path.join(self.voc_dir, "JPEGImages", image_name)
+        print(xml_file)
         image = cv2.imread(image_name)
         image, rescale_fac, padding = resize_image2square(image, ctpn_params.IMAGE_HEIGHT)
 
