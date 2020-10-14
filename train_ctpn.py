@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
     criterion_cls = RPN_CLS_Loss(device)
     criterion_regr = RPN_REGR_Loss(device)
-    optimizer = optim.SGD(model.parameters(), lr=ctpn_params.lr, momentum=0.9)
+    optimizer = optim.SGD([{'params': model.parameters(), 'initial_lr': 1e-3}], lr=ctpn_params.lr, momentum=0.9)
     if torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True
         model = model.cuda()
@@ -89,7 +89,8 @@ if __name__ == "__main__":
         print('loading pretrained model from %s' % resume_net)
         cc = torch.load(resume_net, map_location=device)
         model.load_state_dict(cc['model_state_dict'])
-        resume_epoch = cc['epoch']
+        optimizer.load_state_dict(cc['optimizer'])
+        resume_epoch = cc['epoch'] + 1
     else:
         model.apply(weights_init)
     
@@ -100,7 +101,7 @@ if __name__ == "__main__":
     best_loss_cls = 100
     best_loss_regr = 100
     best_loss = 100
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1, last_epoch=epoch)
     while epoch < ctpn_params.niter:
         print(f'Epoch {epoch}/{ctpn_params.niter}')
         print('#'*50)
@@ -113,6 +114,10 @@ if __name__ == "__main__":
             check_path = os.path.join(save_folder,
                                       f'ctpn_done_ep{epoch:02d}_'
                                       f'{best_loss_cls:.4f}_{best_loss_regr:.4f}_{best_loss:.4f}.pth')
-            torch.save({'model_state_dict': model.state_dict(), 'epoch': epoch}, check_path)
+            torch.save({'model_state_dict': model.state_dict(), 
+                        'epoch': epoch,
+                        'optimizer': optimizer.state_dict(),
+                        'best_loss': best_loss,
+                        'version': 'vgg'}, check_path)
         scheduler.step()
         epoch += 1
