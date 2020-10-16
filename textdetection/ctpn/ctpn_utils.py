@@ -2,6 +2,7 @@
 import numpy as np
 import cv2
 from textdetection.ctpn.ctpn_params import *
+from tools.bbox.bbox import bbox_overlaps
 
 
 def resize_image2square(img, max_size, color=(0, 0, 0)):
@@ -192,7 +193,8 @@ def cal_rpn(imgsize, featuresize, scale, gtboxes):
     base_anchor = gen_anchor(featuresize, scale)
 
     # calculate iou
-    overlaps = cal_overlaps(base_anchor, gtboxes)
+    # overlaps = cal_overlaps(base_anchor, gtboxes)
+    overlaps = bbox_overlaps(base_anchor, gtboxes)
 
     # init labels -1 don't care  0 is negative  1 is positive
     labels = np.empty(base_anchor.shape[0])
