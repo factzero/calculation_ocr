@@ -194,8 +194,9 @@ def cal_rpn(imgsize, featuresize, scale, gtboxes):
 
     # calculate iou
     # overlaps = cal_overlaps(base_anchor, gtboxes)
-    overlaps = bbox_overlaps(base_anchor, gtboxes)
-
+    overlaps = bbox_overlaps(np.ascontiguousarray(base_anchor, dtype=np.float),
+                             np.ascontiguousarray(gtboxes, dtype=np.float))
+    
     # init labels -1 don't care  0 is negative  1 is positive
     labels = np.empty(base_anchor.shape[0])
     labels.fill(-1)
