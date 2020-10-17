@@ -60,9 +60,9 @@ class vocDataset(Dataset):
         image_name = os.path.join(self.voc_dir, "JPEGImages", image_name)
         print(xml_file)
         image = cv2.imread(image_name)
-        image, rescale_fac, padding = resize_image2square(image, ctpn_params.IMAGE_HEIGHT)
-
-        gt_boxes = adj_gtboxes(gt_boxes, rescale_fac, padding)
+        if image.shape[0] != ctpn_params.IMAGE_HEIGHT or image.shape[1] != ctpn_params.IMAGE_HEIGHT:
+            image, rescale_fac, padding = resize_image2square(image, ctpn_params.IMAGE_HEIGHT)
+            gt_boxes = adj_gtboxes(gt_boxes, rescale_fac, padding)
         gt_boxes, class_ids = gen_gt_from_quadrilaterals(gt_boxes, labels, image.shape, ctpn_params.ANCHORS_WIDTH)
         
         h, w, c = image.shape
