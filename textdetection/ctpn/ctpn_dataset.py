@@ -59,17 +59,21 @@ class vocDataset(Dataset):
         gt_boxes, labels, image_name = self.read_xml(xml_file)
         image_name = os.path.join(self.voc_dir, "JPEGImages", image_name)
         print(xml_file)
+        # 读取图片，如果尺寸不是ctpn_params.IMAGE_HEIGHT*ctpn_params.IMAGE_HEIGHT，等比例缩放至该尺寸
         image = cv2.imread(image_name)
         if image.shape[0] != ctpn_params.IMAGE_HEIGHT or image.shape[1] != ctpn_params.IMAGE_HEIGHT:
             image, rescale_fac, padding = resize_image2square(image, ctpn_params.IMAGE_HEIGHT)
             gt_boxes = adj_gtboxes(gt_boxes, rescale_fac, padding)
+        # 将大标定框分割成宽度是ctpn_params.ANCHORS_WIDTH的小框
         gt_boxes, class_ids = gen_gt_from_quadrilaterals(gt_boxes, labels, image.shape, ctpn_params.ANCHORS_WIDTH)
         
         h, w, c = image.shape
         image = image - ctpn_params.IMAGE_MEAN
         image = torch.from_numpy(image.transpose([2, 0, 1])).float()
 
+        # 计算rpn
         [clss, regr], base_anchors = cal_rpn((h, w), (int(h / 16), int(w / 16)), 16, gt_boxes)
+        # 数据按[(label, Vc, Vh)]存放
         regr = np.hstack([clss.reshape(clss.shape[0], 1), regr])
         regr = torch.from_numpy(regr).float()
 

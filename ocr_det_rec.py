@@ -61,22 +61,17 @@ class OcrDetRec():
             degree = degrees(atan2(pt2[1] - pt1[1], pt2[0] - pt1[0]))  # 图像倾斜角度
 
             partImg = self.dumpRotateImage(img, degree, pt1, pt2, pt3, pt4)
-            # dis(partImg)
             if partImg.shape[0] < 1 or partImg.shape[1] < 1 or partImg.shape[0] > partImg.shape[1]:  # 过滤异常图片
                 continue
             text = self.recognizer.inference(partImg)
             if len(text) > 0:
                 results[index] = [rec]
                 results[index].append(text)  # 识别文字
-                # print(text)
-                # cv2.imshow('partImg', partImg)
-                # cv2.waitKey(0)
-                # cv2.destroyAllWindows()
 
         return results
 
     def processing(self, image):
-        det_recs, img_framed, image = self.ctpn_det.inference(image)
+        det_recs = self.ctpn_det.inference(image)
         det_recs = self.sort_box(det_recs)
         results = self.charRec(image, det_recs)
-        return results, img_framed
+        return results

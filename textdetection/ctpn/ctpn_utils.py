@@ -187,24 +187,36 @@ def filter_bbox(bbox, minsize):
 
 
 def cal_rpn(imgsize, featuresize, scale, gtboxes):
+    """
+    计算rpn
+    :param imgsize: 输入图像尺寸
+    :param featuresize: 特征图尺寸，比如VGG16基础网络，此大小为w/16, h/16
+    :param scale: 输入图像与特征图尺寸缩小比例，比如16
+    :param gtboxes: (x1, y1, x2, y2)
+    :return: [labels, bbox_targets], base_anchor
+    """
+
     imgh, imgw = imgsize
 
-    # gen base anchor
+    # gen base anchor 生成基本的anchor，一共9个
     base_anchor = gen_anchor(featuresize, scale)
 
-    # calculate iou
+    # calculate iou 计算anchor和gt-box的overlap，用来给anchor上标签
+    # 假设anchors有x个，gt_boxes有y个，返回的是一个（x,y）的数组
     # overlaps = cal_overlaps(base_anchor, gtboxes)
     overlaps = bbox_overlaps(np.ascontiguousarray(base_anchor, dtype=np.float),
                              np.ascontiguousarray(gtboxes, dtype=np.float))
     
     # init labels -1 don't care  0 is negative  1 is positive
     labels = np.empty(base_anchor.shape[0])
-    labels.fill(-1)
+    labels.fill(-1) # 初始化label，均为-1
 
     # for each GT box corresponds to an anchor which has highest IOU
+    # 找到和每一个gtbox，overlap最大的那个anchor
     gt_argmax_overlaps = overlaps.argmax(axis=0)
 
     # the anchor with the highest IOU overlap with a GT box
+    # 找到和每一个anchor，overlap最大的那个gtbox
     anchor_argmax_overlaps = overlaps.argmax(axis=1)
     anchor_max_overlaps = overlaps[range(overlaps.shape[0]), anchor_argmax_overlaps]
 
@@ -215,7 +227,7 @@ def cal_rpn(imgsize, featuresize, scale, gtboxes):
     # ensure that every GT box has at least one positive RPN region
     labels[gt_argmax_overlaps] = 1
 
-    # only keep anchors inside the image
+    # only keep anchors inside the image 仅保留那些还在图像内部的anchor，超出图像的都删掉
     outside_anchor = np.where(
         (base_anchor[:, 0] < 0) |
         (base_anchor[:, 1] < 0) |
@@ -233,13 +245,10 @@ def cal_rpn(imgsize, featuresize, scale, gtboxes):
     bg_index = np.where(labels == 0)[0]
     num_bg = RPN_TOTAL_NUM - np.sum(labels == 1)
     if (len(bg_index) > num_bg):
-        # print('bgindex:',len(bg_index),'num_bg',num_bg)
         labels[np.random.choice(bg_index, len(bg_index) - num_bg, replace=False)] = -1
 
     # calculate bbox targets
-    # debug here
     bbox_targets = bbox_transfrom(base_anchor, gtboxes[anchor_argmax_overlaps, :])
-    # bbox_targets=[]
 
     return [labels, bbox_targets], base_anchor
 

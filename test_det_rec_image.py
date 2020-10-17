@@ -30,14 +30,18 @@ if __name__ == "__main__":
     ocr = OcrDetRec(opt.det_model, opt.rec_model)
     image_name = opt.image_name
     image = cv2.imread(image_name)
-    results, image_framed = ocr.processing(image)
+    results = ocr.processing(image)
     for (k, v) in results.items():
         print(k, v[1])
-        i = [int(j) for j in v[0]]
+        res = [int(j) for j in v[0]]
         # cv2.putText(image_framed, str(v[1]), (i[0], i[1]+5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
-        image_framed = cv2ImgAddText(image_framed, str(v[1]), i[0], i[1] - 10, (0, 0, 255), 20)
+        cv2.line(image, (res[0], res[1]), (res[2], res[3]), (0, 0, 255), 2)
+        cv2.line(image, (res[0], res[1]), (res[4], res[5]), (0, 0, 255), 2)
+        cv2.line(image, (res[6], res[7]), (res[2], res[3]), (0, 0, 255), 2)
+        cv2.line(image, (res[4], res[5]), (res[6], res[7]), (0, 0, 255), 2)
+        image = cv2ImgAddText(image, str(v[1]), res[0], res[1] - 10, (0, 0, 255), 20)
         
     # print(result)
-    cv2.imshow('image_framed', image_framed)
+    cv2.imshow('image', image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
