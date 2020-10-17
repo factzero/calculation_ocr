@@ -14,7 +14,8 @@ parser = argparse.ArgumentParser(description='train')
 parser.add_argument('--image_root', default='D:/04download/VOC2007_v0', type=str, help='train image root dir')
 parser.add_argument('--save_folder', default='./checkpoints/', help='Location to save checkpoint models')
 parser.add_argument('--batch_size', default=4, type=int, help='batch size')
-parser.add_argument('--resume_net', default='', help='resume net')
+parser.add_argument('--resume_net', default='', help='resume net weights')
+parser.add_argument('--backbone_net', default='', help='backbone net weights')
 
 
 def train(model, loader, criterion_cls, criterion_regr, optimizer, iteration, device):
@@ -69,10 +70,6 @@ def weights_init(m):
 
 if __name__ == "__main__":
     opt = parser.parse_args()
-    image_root = opt.image_root
-    save_folder = opt.save_folder
-    batch_size = opt.batch_size
-    resume_net = opt.resume_net
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = CTPN_Model()
@@ -85,17 +82,27 @@ if __name__ == "__main__":
         model = model.cuda()
     
     resume_epoch = 0
-    if resume_net!='' and os.path.exists(resume_net):
-        print('loading pretrained model from %s' % resume_net)
-        cc = torch.load(resume_net, map_location=device)
+    # 加载已训练模型，用于断点继续训练
+    if opt.resume_net !='' and os.path.exists(opt.resume_net):
+        print('loading pretrained model from %s' % opt.resume_net)
+        cc = torch.load(opt.resume_net, map_location=device)
         model.load_state_dict(cc['model_state_dict'])
         optimizer.load_state_dict(cc['optimizer'])
         resume_epoch = cc['epoch'] + 1
+    # 加载基础网络预训练模型，其它权重使用默认初始化
+    elif opt.backbone_net !='' and os.path.exists(opt.backbone_net):
+        print('loading pretrained model from %s' % opt.backbone_net)
+        backbone = torch.load(opt.backbone_net, map_location=device)
+        model_dict = model.state_dict()
+        pretrained_dict = {k:v for k, v in backbone.items() if k in model_dict}
+        model_dict.update(pretrained_dict)
+        model.load_state_dict(model_dict)
+    # 初始化权重
     else:
         model.apply(weights_init)
     
-    train_dataset = vocDataset(image_root)
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
+    train_dataset = vocDataset(opt.image_root)
+    train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True)
 	
     epoch = resume_epoch
     best_loss_cls = 100
@@ -111,7 +118,7 @@ if __name__ == "__main__":
             best_loss = epoch_loss
             best_loss_regr = epoch_loss_regr
             best_loss_cls = epoch_loss_cls
-            check_path = os.path.join(save_folder,
+            check_path = os.path.join(opt.save_folder,
                                       f'ctpn_done_ep{epoch:02d}_'
                                       f'{best_loss_cls:.4f}_{best_loss_regr:.4f}_{best_loss:.4f}.pth')
             torch.save({'model_state_dict': model.state_dict(), 
