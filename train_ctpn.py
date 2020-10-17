@@ -102,8 +102,8 @@ if __name__ == "__main__":
         model.apply(weights_init)
     
     train_dataset = vocDataset(opt.image_root)
-    train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True)
-	
+    train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True, num_workers=2)
+
     epoch = resume_epoch
     best_loss_cls = 100
     best_loss_regr = 100
