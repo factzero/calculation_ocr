@@ -58,7 +58,6 @@ class vocDataset(Dataset):
         xml_file = os.path.join(self.voc_dir, "Annotations", (img + ".xml"))
         gt_boxes, labels, image_name = self.read_xml(xml_file)
         image_name = os.path.join(self.voc_dir, "JPEGImages", image_name)
-        print(xml_file)
         # 读取图片，如果尺寸不是ctpn_params.IMAGE_HEIGHT*ctpn_params.IMAGE_HEIGHT，等比例缩放至该尺寸
         image = cv2.imread(image_name)
         if image.shape[0] != ctpn_params.IMAGE_HEIGHT or image.shape[1] != ctpn_params.IMAGE_HEIGHT:
