@@ -2,6 +2,7 @@
 import os
 # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import argparse
+import numpy as np
 import torch
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
@@ -59,16 +60,13 @@ def train(model, loader, criterion_cls, criterion_regr, optimizer, iteration, de
     return epoch_loss_cls, epoch_loss_regr, epoch_loss
 
 
-def weights_init(m):
-    classname = m.__class__.__name__
-    if classname.find('Conv') != -1:
-        m.weight.data.normal_(0.0, 0.02)
-    elif classname.find('BatchNorm') != -1:
-        m.weight.data.normal_(1.0, 0.02)
-        m.bias.data.fill_(0)
-
-
 if __name__ == "__main__":
+    random_seed = 2020
+    torch.random.manual_seed(random_seed)
+    np.random.seed(random_seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(random_seed) 
+
     opt = parser.parse_args()
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -76,7 +74,7 @@ if __name__ == "__main__":
 
     criterion_cls = RPN_CLS_Loss(device)
     criterion_regr = RPN_REGR_Loss(device)
-    optimizer = optim.SGD([{'params': model.parameters(), 'initial_lr': 1e-3}], lr=ctpn_params.lr, momentum=0.9)
+    optimizer = optim.SGD([{'params': model.parameters(), 'initial_lr': 0.001}], lr=ctpn_params.lr, momentum=0.99, weight_decay=0.0005)
     if torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True
         model = model.cuda()
@@ -97,12 +95,12 @@ if __name__ == "__main__":
         pretrained_dict = {k:v for k, v in backbone.items() if k in model_dict}
         model_dict.update(pretrained_dict)
         model.load_state_dict(model_dict)
-    # 初始化权重
+    # 默认初始化权重
     else:
-        model.apply(weights_init)
+        print('using default init')
     
     train_dataset = vocDataset(opt.image_root)
-    train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True, num_workers=2)
+    train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True, num_workers=4)
 
     epoch = resume_epoch
     best_loss_cls = 100
@@ -110,7 +108,8 @@ if __name__ == "__main__":
     best_loss = 100
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1, last_epoch=epoch)
     while epoch < ctpn_params.niter:
-        print(f'Epoch {epoch}/{ctpn_params.niter}')
+        lr = scheduler.get_last_lr()
+        print(f'Epoch {epoch}/{ctpn_params.niter}  ** lr:{lr}')
         print('#'*50)
         epoch_loss_cls, epoch_loss_regr, epoch_loss = train(model, train_dataloader, criterion_cls, criterion_regr, 
             optimizer, epoch, device)
@@ -119,7 +118,7 @@ if __name__ == "__main__":
             best_loss_regr = epoch_loss_regr
             best_loss_cls = epoch_loss_cls
             check_path = os.path.join(opt.save_folder,
-                                      f'ctpn_done_ep{epoch:02d}_'
+                                      f'ctpn_done_ep{epoch:04d}_'
                                       f'{best_loss_cls:.4f}_{best_loss_regr:.4f}_{best_loss:.4f}.pth')
             torch.save({'model_state_dict': model.state_dict(), 
                         'epoch': epoch,
