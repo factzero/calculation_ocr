@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
+import sys, os
+sys.path.append("./textdetection/ctpn")
+sys.path.append("./textrecognition/crnnCTC")
 import cv2
 import numpy as np
 from math import *
-from textdetection.ctpn.ctpn_inference import OcrDetCTPN
-from textrecognition.crnnCTC.crnn_inference import OcrTextRec
+from ctpn_inference import OcrDetCTPN
+from crnn_inference import OcrTextRec
 
 
 class OcrDetRec():

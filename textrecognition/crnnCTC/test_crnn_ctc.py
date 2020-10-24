@@ -2,7 +2,7 @@
 import argparse
 import cv2
 import time
-from textrecognition.crnnCTC.crnn_inference import OcrTextRec
+from crnn_inference import OcrTextRec
 
 
 parser = argparse.ArgumentParser(description='test')

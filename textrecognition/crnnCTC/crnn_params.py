@@ -1,4 +1,7 @@
-from textrecognition import keys
+import sys, os
+sys.path.append("..")
+sys.path.extend([os.path.join(root, name) for root, dirs, _ in os.walk("../") for name in dirs])
+import keys
 
 # about data and net
 alphabet = keys.alphabet

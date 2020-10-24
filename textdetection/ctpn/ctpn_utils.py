@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import cv2
-from textdetection.ctpn.ctpn_params import *
-from tools.bbox.bbox import bbox_overlaps
+from ctpn_params import *
+from bbox.bbox import bbox_overlaps
 
 
 def resize_image2square(img, max_size, color=(0, 0, 0)):

@@ -4,10 +4,10 @@ import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
-from textdetection.ctpn.ctpn_model import CTPN_Model
-from textdetection.ctpn.ctpn_utils import gen_anchor, bbox_transfor_inv, clip_box, filter_bbox,nms, TextProposalConnectorOriented
-from textdetection.ctpn.ctpn_utils import resize
-from textdetection.ctpn import ctpn_params
+from ctpn_model import CTPN_Model
+from ctpn_utils import gen_anchor, bbox_transfor_inv, clip_box, filter_bbox,nms, TextProposalConnectorOriented
+from ctpn_utils import resize
+import ctpn_params
 
 class OcrDetCTPN():
     def __init__(self, model_path='./checkpoints/CTPN.pth'):

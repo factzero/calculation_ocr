@@ -28,7 +28,7 @@ d、
 ### 1.4 训练
 
 + 用cython加速计算overlap
-  + tools/bbox目录下执行 python setup.py build_ext --inplace
+  + bbox目录下执行 python setup.py build_ext --inplace
 
 # 二、文字识别
 

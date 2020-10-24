@@ -4,8 +4,8 @@ import argparse
 import time
 import torch
 from torch.utils.data import Dataset, DataLoader
-from textdetection.ctpn.ctpn_dataset import vocDataset
-from textdetection.ctpn.ctpn_model import CTPN_Model, RPN_CLS_Loss, RPN_REGR_Loss
+from ctpn_dataset import vocDataset
+from ctpn_model import CTPN_Model, RPN_CLS_Loss, RPN_REGR_Loss
 
 
 parser = argparse.ArgumentParser(description='test')

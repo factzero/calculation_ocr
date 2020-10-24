@@ -6,13 +6,13 @@ import numpy as np
 import torch
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
-from textdetection.ctpn.ctpn_dataset import vocDataset
-from textdetection.ctpn.ctpn_model import CTPN_Model, RPN_CLS_Loss, RPN_REGR_Loss
-from textdetection.ctpn import ctpn_params
+from ctpn_dataset import vocDataset
+from ctpn_model import CTPN_Model, RPN_CLS_Loss, RPN_REGR_Loss
+import ctpn_params
 
 
 parser = argparse.ArgumentParser(description='train')
-parser.add_argument('--image_root', default='D:/04download/VOC2007_v0', type=str, help='train image root dir')
+parser.add_argument('--image_root', default='D:/04download/VOC2007', type=str, help='train image root dir')
 parser.add_argument('--save_folder', default='./checkpoints/', help='Location to save checkpoint models')
 parser.add_argument('--batch_size', default=4, type=int, help='batch size')
 parser.add_argument('--resume_net', default='', help='resume net weights')
@@ -80,14 +80,14 @@ if __name__ == "__main__":
         model = model.cuda()
     
     resume_epoch = 0
-    # ¼ÓÔØÒÑÑµÁ·Ä£ĞÍ£¬ÓÃÓÚ¶Ïµã¼ÌĞøÑµÁ·
+    # åŠ è½½å·²è®­ç»ƒæ¨¡å‹ï¼Œç”¨äºæ–­ç‚¹ç»§ç»­è®­ç»ƒ
     if opt.resume_net !='' and os.path.exists(opt.resume_net):
         print('loading pretrained model from %s' % opt.resume_net)
         cc = torch.load(opt.resume_net, map_location=device)
         model.load_state_dict(cc['model_state_dict'])
         optimizer.load_state_dict(cc['optimizer'])
         resume_epoch = cc['epoch'] + 1
-    # ¼ÓÔØ»ù´¡ÍøÂçÔ¤ÑµÁ·Ä£ĞÍ£¬ÆäËüÈ¨ÖØÊ¹ÓÃÄ¬ÈÏ³õÊ¼»¯
+    # åŠ è½½åŸºç¡€ç½‘ç»œé¢„è®­ç»ƒæ¨¡å‹ï¼Œå…¶å®ƒæƒé‡ä½¿ç”¨é»˜è®¤åˆå§‹åŒ–
     elif opt.backbone_net !='' and os.path.exists(opt.backbone_net):
         print('loading pretrained model from %s' % opt.backbone_net)
         backbone = torch.load(opt.backbone_net, map_location=device)
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         pretrained_dict = {k:v for k, v in backbone.items() if k in model_dict}
         model_dict.update(pretrained_dict)
         model.load_state_dict(model_dict)
-    # Ä¬ÈÏ³õÊ¼»¯È¨ÖØ
+    # é»˜è®¤åˆå§‹åŒ–æƒé‡
     else:
         print('using default init')
     

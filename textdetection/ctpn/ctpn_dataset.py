@@ -7,8 +7,8 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 from xml.dom.minidom import parse
-from textdetection.ctpn import ctpn_params
-from textdetection.ctpn.ctpn_utils import gen_gt_from_quadrilaterals, cal_rpn, resize_image2square, adj_gtboxes
+import ctpn_params 
+from ctpn_utils import gen_gt_from_quadrilaterals, cal_rpn, resize_image2square, adj_gtboxes
 
 
 class vocDataset(Dataset):

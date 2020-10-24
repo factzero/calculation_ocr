@@ -4,10 +4,10 @@ import os
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
-from textrecognition.crnnCTC import crnn_params
-from textrecognition.crnnCTC.crnn_model import CRNN
-from textrecognition.crnnCTC.crnn_dataset import imgDataset
-import textrecognition.crnnCTC.crnn_utils as utils
+import crnn_params
+from crnn_model import CRNN
+from crnn_dataset import imgDataset
+import crnn_utils as utils
 
 
 parser = argparse.ArgumentParser(description='train')

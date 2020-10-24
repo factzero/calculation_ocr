@@ -2,7 +2,7 @@
 import argparse
 import cv2
 import time
-from textdetection.ctpn.ctpn_inference import OcrDetCTPN
+from ctpn_inference import OcrDetCTPN
 
 
 parser = argparse.ArgumentParser(description='test')

@@ -2,9 +2,9 @@
 import cv2
 import numpy as np
 import torch
-from textrecognition.crnnCTC import crnn_params
-from textrecognition.crnnCTC.crnn_model import CRNN
-from textrecognition.crnnCTC.crnn_utils import strLabelConverter
+import crnn_params
+from crnn_model import CRNN
+from crnn_utils import strLabelConverter
 
 
 class OcrTextRec():

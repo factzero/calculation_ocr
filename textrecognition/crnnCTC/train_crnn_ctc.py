@@ -6,15 +6,15 @@ import time
 import torch
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
-from textrecognition.crnnCTC import crnn_params
-from textrecognition.crnnCTC.crnn_model import CRNN
-from textrecognition.crnnCTC.crnn_dataset import imgDataset
-import textrecognition.crnnCTC.crnn_utils as utils
+import crnn_params
+from crnn_model import CRNN
+from crnn_dataset import imgDataset
+import crnn_utils as utils
 
 
 parser = argparse.ArgumentParser(description='train')
 parser.add_argument('--image_root', default='./data/', type=str, help='train image root dir')
-parser.add_argument('--train_label', default='./data/data_train.list', type=str, help='train label')
+parser.add_argument('--train_label', default='/data/data_train.list', type=str, help='train label')
 parser.add_argument('--val_label', default='./data/data_test.list', type=str, help='val label')
 parser.add_argument('--save_folder', default='./checkpoints/', help='Location to save checkpoint models')
 parser.add_argument('--batch_size', default=64, type=int, help='batch size')
@@ -109,12 +109,6 @@ def backward_hook(self, grad_input, grad_output):
 
 if __name__ == "__main__":
     opt = parser.parse_args()
-    image_root = opt.image_root
-    train_label = opt.train_label
-    val_label = opt.val_label
-    save_folder = opt.save_folder
-    batch_size = opt.batch_size
-    resume_net = opt.resume_net
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     nclass = len(crnn_params.alphabet) + 1
@@ -126,19 +120,19 @@ if __name__ == "__main__":
         torch.backends.cudnn.benchmark = True
         model = model.cuda()
         criterion = criterion.cuda()
-    if resume_net!='' and os.path.exists(resume_net):
-        print('loading pretrained model from %s' % resume_net)
-        model.load_state_dict(torch.load(resume_net))
+    if opt.resume_net !='' and os.path.exists(opt.resume_net):
+        print('loading pretrained model from %s' % opt.resume_net)
+        model.load_state_dict(torch.load(opt.resume_net))
     else:
         model.apply(weights_init)
     model.register_backward_hook(backward_hook)
 
-    train_dataset = imgDataset(image_root, train_label, 
+    train_dataset = imgDataset(opt.image_root, opt.train_label, 
                                crnn_params.alphabet, (crnn_params.imgW, crnn_params.imgH), crnn_params.mean, crnn_params.std)
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=crnn_params.workers)
-    val_dataset = imgDataset(image_root, val_label, 
+    train_dataloader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True, num_workers=crnn_params.workers)
+    val_dataset = imgDataset(opt.image_root, opt.val_label, 
                              crnn_params.alphabet, (crnn_params.imgW, crnn_params.imgH), crnn_params.mean, crnn_params.std, is_aug=False)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    val_dataloader = DataLoader(val_dataset, batch_size=opt.batch_size, shuffle=False)
 
     if not os.path.exists(crnn_params.expr_dir):
         os.mkdir(crnn_params.expr_dir)
@@ -148,10 +142,9 @@ if __name__ == "__main__":
     while Iteration < crnn_params.niter:
         train(model, train_dataloader, criterion, optimizer, Iteration, device)
         accuracy = val(model, val_dataloader, criterion, Iteration, device, max_i=10000)
-        torch.save(model.state_dict(), '{0}/crnn_Rec_done_s_{1}_{2}.pth'.format(
-            save_folder, Iteration, str(time.time())))
+        torch.save(model.state_dict(), '{0}/crnn_Rec_done_s_{1}_{2}.pth'.format(opt.save_folder, Iteration, str(time.time())))
         if accuracy > best_accuracy:
             best_accuracy = accuracy
-            torch.save(model.state_dict(), '{0}/crnn_Rec_done_{1}_{2}.pth'.format(save_folder, Iteration, accuracy))
-            torch.save(model.state_dict(), '{0}/crnn_Rec_best.pth'.format(save_folder))
+            torch.save(model.state_dict(), '{0}/crnn_Rec_done_{1}_{2}.pth'.format(opt.save_folder, Iteration, accuracy))
+            torch.save(model.state_dict(), '{0}/crnn_Rec_best.pth'.format(opt.save_folder))
         Iteration += 1

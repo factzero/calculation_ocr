@@ -5,10 +5,14 @@ import cv2
 import numpy as np
 import xml.dom.minidom
 import argparse
+import ctpn_params
+from ctpn_utils import resize_image2square, adj_gtboxes
+
 
 parser = argparse.ArgumentParser(description='test')
-parser.add_argument('--icdar2017_root', default='D:/04download/icdar2017rctw_train_v1.2', type=str, help='source')
+parser.add_argument('--icdar_root', default='D:/04download/icdar2017rctw_train_v1.2', type=str, help='source')
 parser.add_argument('--voc_root', default='D:/04download', help='target dir')
+
 
 def WriterXMLFiles(filename, img_name, box_list, labels, w, h, d):
     doc = xml.dom.minidom.Document()
@@ -150,7 +154,10 @@ if __name__ == "__main__":
         print(gt_name)
         boxes, labels = load_annoataion(gt_name)
         img = cv2.imread(img_name)
+        img, rescale_fac, padding = resize_image2square(img, ctpn_params.IMAGE_HEIGHT)
+        boxes = adj_gtboxes(boxes, rescale_fac, padding)
         h, w, d = img.shape
+        cv2.imwrite(img_name, img)
         xml_file = os.path.join(target_ann_dir, (img_list[idx].split('.')[0] + '.xml'))
         WriterXMLFiles(xml_file, img_list[idx], boxes, labels, w, h, d)
 
