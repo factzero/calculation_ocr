@@ -12,7 +12,7 @@ import ctpn_params
 
 
 parser = argparse.ArgumentParser(description='train')
-parser.add_argument('--image_root', default='D:/04download/VOC2007', type=str, help='train image root dir')
+parser.add_argument('--image_root', default='D:/80dataset/ocr/VOC2007', type=str, help='train image root dir')
 parser.add_argument('--save_folder', default='./checkpoints/', help='Location to save checkpoint models')
 parser.add_argument('--batch_size', default=4, type=int, help='batch size')
 parser.add_argument('--resume_net', default='', help='resume net weights')

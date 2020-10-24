@@ -11,7 +11,7 @@ from ctpn_utils import resize_image2square, adj_gtboxes
 
 parser = argparse.ArgumentParser(description='test')
 parser.add_argument('--icdar_root', default='D:/80dataset/ocr/share/data_ready', type=str, help='source')
-parser.add_argument('--voc_root', default='D:/04download', help='target dir')
+parser.add_argument('--voc_root', default='D:/80dataset/ocr', help='target dir')
 
 
 def WriterXMLFiles(filename, img_name, box_list, labels, w, h, d):
