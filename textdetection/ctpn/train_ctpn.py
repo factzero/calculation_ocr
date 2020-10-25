@@ -106,7 +106,7 @@ if __name__ == "__main__":
     best_loss_cls = 100
     best_loss_regr = 100
     best_loss = 100
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1, last_epoch=epoch)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1, last_epoch=epoch)
     while epoch < ctpn_params.niter:
         lr = scheduler.get_last_lr()
         print(f'Epoch {epoch}/{ctpn_params.niter}  ** lr:{lr}')

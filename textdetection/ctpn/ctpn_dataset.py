@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import cv2
 import os
+import argparse
 import random
 import numpy as np
 import torch
@@ -12,10 +13,11 @@ from ctpn_utils import gen_gt_from_quadrilaterals, cal_rpn, resize_image2square,
 
 
 class vocDataset(Dataset):
-    def __init__(self, voc_dir, is_aug=True):
+    def __init__(self, voc_dir, is_aug=True, is_debug=False):
         super(vocDataset, self).__init__()
         self.voc_dir = voc_dir
         self.imgs = self.get_trainval_imgs(os.path.join(self.voc_dir, "ImageSets", "Main", "trainval.txt"))
+        self.is_debug = is_debug
 
     def get_trainval_imgs(self, trainval_txt):
         imgs = []
@@ -67,7 +69,8 @@ class vocDataset(Dataset):
         gt_boxes, class_ids = gen_gt_from_quadrilaterals(gt_boxes, labels, image.shape, ctpn_params.ANCHORS_WIDTH)
         
         h, w, c = image.shape
-        image = image - ctpn_params.IMAGE_MEAN
+        if self.is_debug == False:
+            image = image - ctpn_params.IMAGE_MEAN
         image = torch.from_numpy(image.transpose([2, 0, 1])).float()
 
         # º∆À„rpn
@@ -79,7 +82,10 @@ class vocDataset(Dataset):
         clss = np.expand_dims(clss, axis=0)
         clss = torch.from_numpy(clss).float()
 
-        return image, regr, clss, index
+        if self.is_debug:
+            return image, gt_boxes, clss, index
+        else:
+            return image, regr, clss, index
 
 
 def cv2ImgAddText(img, text, left, top, textColor=(0, 255, 0), textSize=20):
@@ -96,7 +102,11 @@ def cv2ImgAddText(img, text, left, top, textColor=(0, 255, 0), textSize=20):
 
 
 if __name__ == '__main__':
-    train_dataset = vocDataset("D:/80dataset/ocr/VOC2007_720x720")
+    parser = argparse.ArgumentParser(description='train')
+    parser.add_argument('--image_root', default='D:/80dataset/ocr/VOC2007_test', type=str, help='image root dir')
+    opt = parser.parse_args()
+
+    train_dataset = vocDataset(opt.image_root, is_debug=True)
     train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False)
     dataset_size = len(train_dataloader)
 	
@@ -114,10 +124,10 @@ if __name__ == '__main__':
         #     cv2.line(image, (int(gtbox[6]), int(gtbox[7])), (int(gtbox[0]), int(gtbox[1])), (255, 0, 0), 4)
         #     image = cv2ImgAddText(image, str(label[0]), gtbox[2], gtbox[3], (255, 0, 0), 80)
         for gtbox in gtboxes:
-            cv2.line(image, (int(gtbox[0]), int(gtbox[1])), (int(gtbox[2]), int(gtbox[1])), (0, 0, 255), 4)
-            cv2.line(image, (int(gtbox[2]), int(gtbox[1])), (int(gtbox[2]), int(gtbox[3])), (0, 0, 255), 4)
-            cv2.line(image, (int(gtbox[2]), int(gtbox[3])), (int(gtbox[0]), int(gtbox[3])), (0, 0, 255), 4)
-            cv2.line(image, (int(gtbox[0]), int(gtbox[3])), (int(gtbox[0]), int(gtbox[1])), (0, 0, 255), 4)
+            cv2.line(image, (int(gtbox[0]), int(gtbox[1])), (int(gtbox[2]), int(gtbox[1])), (0, 0, 255), 2)
+            cv2.line(image, (int(gtbox[2]), int(gtbox[1])), (int(gtbox[2]), int(gtbox[3])), (0, 0, 255), 2)
+            cv2.line(image, (int(gtbox[2]), int(gtbox[3])), (int(gtbox[0]), int(gtbox[3])), (0, 0, 255), 2)
+            cv2.line(image, (int(gtbox[0]), int(gtbox[3])), (int(gtbox[0]), int(gtbox[1])), (0, 0, 255), 2)
         cv2.imshow("input_image", image)
         cv2.waitKey(0)
         print(f'Batch:{i_batch}/{dataset_size}\n')

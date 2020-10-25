@@ -117,7 +117,7 @@ def load_annoataion(p):
 
 if __name__ == "__main__":
     opt = parser.parse_args()
-    DATASET_LIST = ["ali_icpr", "MSRA_TD500"]
+    DATASET_LIST = ["ali_icpr", "MSRA_TD500", "icdar2015Text Localtion"]
     # target dir
     base_dir = opt.voc_root
     if not os.path.exists(base_dir):
@@ -134,8 +134,11 @@ if __name__ == "__main__":
     
     for dataset in DATASET_LIST:
         # source
-        train_img_dir = os.path.join(opt.icdar2017_root, dataset, "train_im")
-        train_txt_dir = os.path.join(opt.icdar2017_root, dataset, "train_gt")
+        train_img_dir = os.path.join(opt.icdar_root, dataset, "train_im")
+        train_txt_dir = os.path.join(opt.icdar_root, dataset, "train_gt")
+
+        if not os.path.exists(train_img_dir) or not os.path.exists(train_txt_dir):
+            continue
 
         gt_list = []
         img_list = []
@@ -143,8 +146,8 @@ if __name__ == "__main__":
         for file_name in os.listdir(train_img_dir):
             if file_name.split('.')[-1] == 'jpg':
                 os.rename(os.path.join(train_img_dir, file_name), 
-                        os.path.join(target_img_dir, "share_Train_" + os.path.basename(file_name)))
-                img_list.append("share_Train_" + os.path.basename(file_name))
+                        os.path.join(target_img_dir, dataset + os.path.basename(file_name)))
+                img_list.append(dataset + os.path.basename(file_name))
                 # img_list.append(file_name)
                 gt_list.append("gt_" + file_name.replace('.jpg', '.txt'))
 

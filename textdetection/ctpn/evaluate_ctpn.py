@@ -39,18 +39,20 @@ def val(model, loader, criterion_cls, criterion_regr, device):
         total_v_reg_loss += loss_regr.item()
         total_loss += loss.item()
         print(f'Batch:{i_batch}/{epoch_size}')
+        
     end_time = time.time()
     total_time = end_time - start_time
     
     total_cls_loss /= epoch_size
     total_v_reg_loss /= epoch_size
     total_loss /= epoch_size
+    avg_infer_time = total_time/epoch_size
 
     print('####################  Start evaluate  ####################')
-    print('loss: {0}'.format(total_loss))
-    print('classification loss: {0}'.format(total_cls_loss))
-    print('vertical regression loss: {0}'.format(total_v_reg_loss))
-    print('{0} iterations for {1} seconds, avg {2} seconds.'.format(epoch_size, total_time, total_time/epoch_size))
+    print(f'loss: {total_loss:.4f}')
+    print(f'classification loss: {total_cls_loss:.4f}')
+    print(f'vertical regression loss: {total_v_reg_loss:.4f}')
+    print(f'{epoch_size} iterations for {total_time:.4f} seconds, avg {avg_infer_time:.4f} seconds.')
     print('#####################  Evaluate end  #####################')
     print('\n')
 
@@ -75,4 +77,5 @@ if __name__ == "__main__":
         cc = torch.load(opt.model_path, map_location=device)
         model.load_state_dict(cc['model_state_dict'])
         loss_cls, loss_regr, loss = val(model, val_dataloader, criterion_cls, criterion_regr, device)
-
+    else:
+        print(f'evaluate Error: {opt.model_path} doesnot exist')
