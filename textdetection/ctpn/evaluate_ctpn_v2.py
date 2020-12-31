@@ -1,15 +1,19 @@
 # -*- coding: utf-8 -*-
-import os
+import sys, os
+sys.path.append("./textdetection")
+sys.path.append("./textdetection/cal_recall")
 import argparse
 import cv2
 import numpy as np
 from tqdm import tqdm
 from ctpn_inference import OcrDetCTPN
+from cal_recall.script import cal_recall_precison_f1
 
 
 parser = argparse.ArgumentParser(description='test')
 parser.add_argument('--image_root', default='D:/80dataset/ocr/icdar2015TextLocaltion/test_im', type=str, help='image root')
 parser.add_argument('--model_path', default='./checkpoints/CTPN.pth', type=str, help='trained model path')
+parser.add_argument('--test_gt', default='D:/80dataset/ocr/icdar2015TextLocaltion/test_gt', type=str, help='test image groud truth')
 
 
 if __name__ == "__main__":
@@ -23,9 +27,8 @@ if __name__ == "__main__":
 
     detect = OcrDetCTPN(opt.model_path)
     image_files = os.listdir(opt.image_root)
-    bar = tqdm(total=len(image_files))
-    for image_file in image_files:
-        bar.update(1)
+    for i in tqdm(range(len(image_files))):
+        image_file = image_files[i]
         im_name = image_file.split('.')[0]
         fid = open(os.path.join(txt_save_path, 'res_' + im_name + '.txt'), 'w+', encoding='utf-8')
         image_file = os.path.join(opt.image_root, image_file)
@@ -43,4 +46,5 @@ if __name__ == "__main__":
         cv2.imwrite(os.path.join(img_save_path, im_name + '.jpg'), image)
         fid.close()
 
-    
+    pre = cal_recall_precison_f1(opt.test_gt, txt_save_path, show_result=False)
+    print(pre)

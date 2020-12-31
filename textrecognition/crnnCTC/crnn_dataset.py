@@ -7,7 +7,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 from textrecognition.crnnCTC import crnn_params
-from tools.data_augment import dataAugment
+from data_augment import dataAugment
 
 
 class resizeNormalize(object):

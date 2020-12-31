@@ -3,9 +3,11 @@ import argparse
 import numpy as np
 import os
 import time
+import datetime
 import torch
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
+from tqdm import tqdm
 import crnn_params
 from crnn_model import CRNN
 from crnn_dataset import imgDataset
@@ -22,7 +24,7 @@ parser.add_argument('--resume_net', default='', help='resume net')
 parser.add_argument('--resume_iter', default=0, type=int, help='resume Iteration')
 
 
-def val(model, loader, criterion, iteration, device, max_i=1000):
+def val(model, loader, criterion, iteration, device):
     print('Start val')
     for p in model.parameters():
         p.requires_grad = False
@@ -34,7 +36,8 @@ def val(model, loader, criterion, iteration, device, max_i=1000):
     n_total = 0
     n_correct = 0
     preds = 0
-    for i_batch, (image, label, index) in enumerate(loader):
+    # for i_batch, (image, label, index) in enumerate(loader):
+    for i_batch, (image, label, index) in tqdm(enumerate(loader), total=len(loader), desc='test model'):
         image = image.to(device)
         preds = model(image)
         batch_size = image.size(0)
@@ -50,20 +53,14 @@ def val(model, loader, criterion, iteration, device, max_i=1000):
             if pred == target:
                 n_correct += 1
 
-        if (i_batch+1)%crnn_params.displayInterval == 0:
-            print('[%d/%d][%d/%d]' % (iteration, crnn_params.niter, i_batch, len(loader)))
-
         n_total += batch_size
-        if i_batch == max_i:
-            break
 
     raw_preds = converter.decode(preds.data, preds_size.data, raw=True)[:crnn_params.n_test_disp]
     for raw_pred, pred, gt in zip(raw_preds, sim_preds, label):
         print('%-20s => %-20s, gt: %-20s' % (raw_pred, pred, gt))
 
-    print(n_correct, n_total)
     accuracy = n_correct / float(n_total)
-    print('Test loss: %f, accuray: %f' % (loss_avg.val(), accuracy))
+    print('Test loss: %.6f, accuray: %.6f' % (loss_avg.val(), accuracy))
 
     return accuracy
 
@@ -89,7 +86,8 @@ def train(model, loader, criterion, optimizer, iteration, device):
         loss_avg.add(cost)
 
         if (i_batch+1) % crnn_params.displayInterval == 0:
-            print('[%d/%d][%d/%d] Loss: %f' % (iteration, crnn_params.niter, i_batch, len(loader), loss_avg.val()))
+            theTime = datetime.datetime.now()
+            print('%s [%d/%d][%d/%d] Loss: %f' % (theTime, iteration, crnn_params.niter, i_batch, len(loader), loss_avg.val()))
             loss_avg.reset()
 
 
@@ -108,6 +106,7 @@ def backward_hook(self, grad_input, grad_output):
 
 
 if __name__ == "__main__":
+    print('alphabet length : ', len(crnn_params.alphabet_list))
     opt = parser.parse_args()
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -141,10 +140,10 @@ if __name__ == "__main__":
     Iteration = opt.resume_iter
     while Iteration < crnn_params.niter:
         train(model, train_dataloader, criterion, optimizer, Iteration, device)
-        accuracy = val(model, val_dataloader, criterion, Iteration, device, max_i=10000)
-        torch.save(model.state_dict(), '{0}/crnn_Rec_done_s_{1}_{2}.pth'.format(opt.save_folder, Iteration, str(time.time())))
+        accuracy = val(model, val_dataloader, criterion, Iteration, device)
+        # torch.save(model.state_dict(), '{0}/crnn_Rec_done_s_{1:04d}_{2}.pth'.format(opt.save_folder, Iteration, str(time.time())))
         if accuracy > best_accuracy:
             best_accuracy = accuracy
-            torch.save(model.state_dict(), '{0}/crnn_Rec_done_{1}_{2}.pth'.format(opt.save_folder, Iteration, accuracy))
+            torch.save(model.state_dict(), '{0}/crnn_Rec_done_{1:04d}_{2:.4f}.pth'.format(opt.save_folder, Iteration, accuracy))
             torch.save(model.state_dict(), '{0}/crnn_Rec_best.pth'.format(opt.save_folder))
         Iteration += 1

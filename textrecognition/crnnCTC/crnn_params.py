@@ -4,6 +4,7 @@ sys.path.extend([os.path.join(root, name) for root, dirs, _ in os.walk("../") fo
 import keys
 
 # about data and net
+alphabet_list = keys.alphabet_list
 alphabet = keys.alphabet
 keep_ratio = False # whether to keep ratio for image resize
 manualSeed = 1234 # reproduce experiemnt
@@ -20,14 +21,14 @@ dealwith_lossnone = True # whether to replace all nan/inf in gradients to zero
 cuda = True # enables cuda
 multi_gpu = False # whether to use multi gpu
 ngpu = 1 # number of GPUs to use. Do remember to set multi_gpu to True!
-workers = 4 # number of data loading workers
+workers = 2 # number of data loading workers
 
 # training process
 displayInterval = 1 # interval to be print the train loss
 valInterval = 1000 # interval to val the model loss and accuray
 saveInterval = 1000 # interval to save model
 n_test_disp = 10 # number of samples to display when val the model
-niter = 300
+niter = 3000
 
 std = 0.5
 mean = 0.5
