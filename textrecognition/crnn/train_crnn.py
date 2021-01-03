@@ -15,28 +15,6 @@ from crnn_model import get_crnn
 from crnn_dataset import OcrDataset
 
 
-class AverageMeter(object):
-    """Computes and stores the average and current value"""
-    def __init__(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
-        self.reset()
-
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
-
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
-
-
 def parse_arg():
     parser = argparse.ArgumentParser(description="train crnn")
     parser.add_argument('--cfg', default='./textrecognition/crnn/config.yaml', type=str, help='experiment configuration filename')
@@ -62,9 +40,9 @@ def parse_arg():
 def train(config, loader, converter, model, criterion, optimizer, device, epoch, writer_dict=None):
     model.train()
 
-    batch_time = AverageMeter()
-    data_time = AverageMeter()
-    losses = AverageMeter()
+    batch_time = utils.AverageMeter()
+    data_time = utils.AverageMeter()
+    losses = utils.AverageMeter()
 
     start_time = time.time()
     for i, (image, label, index) in enumerate(loader):
@@ -107,7 +85,7 @@ def train(config, loader, converter, model, criterion, optimizer, device, epoch,
 
 
 def validate(config, loader, converter, model, criterion, device, epoch, writer_dict=None):
-    losses = AverageMeter()
+    losses = utils.AverageMeter()
     model.eval()
 
     n_correct = 0

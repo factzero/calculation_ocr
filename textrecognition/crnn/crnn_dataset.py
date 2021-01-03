@@ -18,15 +18,12 @@ class resizeNormalize():
         w, h = img.size
         new_h = self.img_h
         new_w = int(w / h * new_h)
-        if self.is_train:
-            if new_w < w:
-                img_sz = img.resize((new_w, new_h))
-                image = Image.new('L', (self.img_w, self.img_h), (128))
-                image.paste(img_sz)
-            else:
-                image = img.resize((self.img_w, self.img_h))
+        if new_w < self.img_w:
+            img_sz = img.resize((new_w, new_h))
+            image = Image.new('L', (self.img_w, self.img_h), (128))
+            image.paste(img_sz)
         else:
-            image = img.resize((new_w, new_h))
+            image = img.resize((self.img_w, self.img_h))
         image = np.array(image).astype(np.float32)
         image = (image/255.0 - self.MEAN)/self.STD
 
